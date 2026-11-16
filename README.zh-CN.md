@@ -895,6 +895,8 @@ npm run screenshots
 
 ## 13. 许可证
 
+Copyright (C) 2026 HyiKi。
+
 本项目使用 **GNU General Public License v3.0**，详见 [LICENSE](LICENSE)。
 
 ---

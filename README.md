@@ -897,6 +897,8 @@ This project is provided **for entertainment and educational use by League of Le
 
 ## 13. License
 
+Copyright (C) 2026 HyiKi.
+
 This project is licensed under the **GNU General Public License v3.0**. See [LICENSE](LICENSE).
 
 ---
