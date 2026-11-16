@@ -1,4 +1,4 @@
-# DraftGap Draft Winrate Model (Reproducible Python Implementation)
+# DraftGap Draft Winrate Model
 
 **English** · [简体中文](README.zh-CN.md)
 
@@ -883,11 +883,25 @@ Peak memory is dominated by the roughly 1.35 million matchup/synergy entries in 
 - Page test entry: `window.DRAFTGAP_DEBUG.test()` (the page's built-in debug draft); Playwright read the rendered `document.body.innerText` as the baseline.
 - `ax.lolalytics.com` was not called, and no DraftGap account or private endpoint was used.
 
-This project is not affiliated with DraftGap. It is for local learning, research, and personal data analysis. Respect DraftGap's terms of service, dataset usage boundaries, and Riot's developer policies; do not commercially redistribute the datasets or this service.
+## 11. Acknowledgements
+
+- [DraftGap](https://draftgap.com/) for the original page, model behavior, and public datasets that made this independent reproduction possible.
+- [agent-browser](https://github.com/vercel-labs/agent-browser) for the browser automation behind the E2E suite and README screenshots.
+- [Polymarket](https://polymarket.com/) for publishing the esports match, game, and draft data used by the market lineup importer.
+
+This project is independent and is not endorsed by or affiliated with any of them.
+
+## 12. Disclaimer
+
+This project is provided **for entertainment and educational use by League of Legends enthusiasts only**. It is not a betting, gambling, or professional coaching tool, and its predictions are not guarantees. Use it at your own risk. League of Legends and all related names, assets, and data belong to their respective owners. Respect DraftGap's terms of service, dataset usage boundaries, and Riot's developer policies; do not commercially redistribute the datasets or this service.
+
+## 13. License
+
+This project is licensed under the **GNU General Public License v3.0**. See [LICENSE](LICENSE).
 
 ---
 
-## 11. File structure
+## 14. File structure
 
 ```text
 draftgap-rea/
@@ -895,6 +909,7 @@ draftgap-rea/
 ├── validate_fidelity.py     # compare against captured page values
 ├── README.md                # English README
 ├── README.zh-CN.md          # Simplified Chinese README
+├── LICENSE                  # GNU General Public License v3.0
 ├── package.json             # agent-browser E2E dev dependency and scripts
 ├── package-lock.json
 ├── .gitignore

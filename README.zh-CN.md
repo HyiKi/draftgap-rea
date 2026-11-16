@@ -1,4 +1,4 @@
-# DraftGap 阵容胜率模型（可复现 Python 实现）
+# DraftGap 阵容胜率模型
 
 [English](README.md) · **简体中文**
 
@@ -881,11 +881,25 @@ npm run screenshots
 - 页面测试入口：`window.DRAFTGAP_DEBUG.test()`（页面内置 debug draft），通过 Playwright 读取渲染后的 `document.body.innerText` 作为基准。
 - 未调用 `ax.lolalytics.com`，未使用 DraftGap 的账号或私有接口。
 
-本项目与 DraftGap 无关联，仅用于本地学习、研究与自己的数据分析。请遵守 DraftGap 的服务条款、数据集使用边界和 Riot 开发者政策；不要将数据集或本服务用于商业再分发。
+## 11. 鸣谢
+
+- [DraftGap](https://draftgap.com/)：原始页面、模型行为和公开数据集，使这个独立复现成为可能。
+- [agent-browser](https://github.com/vercel-labs/agent-browser)：E2E 测试和 README 截图所使用的浏览器自动化工具。
+- [Polymarket](https://polymarket.com/)：为 market 阵容导入提供公开的电竞赛事、Game 和 draft 数据。
+
+本项目与上述项目均无隶属或背书关系。
+
+## 12. 免责声明
+
+本项目**仅提供给英雄联盟爱好者用于娱乐和学习**。它不是博彩、赌博或专业教练工具，预测结果不构成任何保证，使用风险由使用者自行承担。英雄联盟及相关名称、素材和数据归各自权利人所有。请遵守 DraftGap 的服务条款、数据集使用边界和 Riot 开发者政策；不要将数据集或本服务用于商业再分发。
+
+## 13. 许可证
+
+本项目使用 **GNU General Public License v3.0**，详见 [LICENSE](LICENSE)。
 
 ---
 
-## 11. 文件结构
+## 14. 文件结构
 
 ```text
 draftgap-rea/
@@ -893,6 +907,7 @@ draftgap-rea/
 ├── validate_fidelity.py     # 与页面抓取值逐项比对
 ├── README.md                # English README
 ├── README.zh-CN.md          # 简体中文 README
+├── LICENSE                  # GNU General Public License v3.0
 ├── package.json             # agent-browser E2E 开发依赖与脚本
 ├── package-lock.json
 ├── .gitignore

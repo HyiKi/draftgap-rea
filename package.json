@@ -2,6 +2,7 @@
   "name": "draftgap-rea",
   "version": "1.0.0",
   "private": true,
+  "license": "GPL-3.0-only",
   "description": "E2E harness for the local DraftGap model service",
   "scripts": {
     "test:e2e": "bash tests/e2e/run.sh",

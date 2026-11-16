@@ -48,9 +48,14 @@ page_assert() {
   echo "ok - $name"
 }
 
-if grep -RIn -i 'polymarket' "$ROOT/README.md" "$ROOT/README.zh-CN.md" "$ROOT/web" >/dev/null 2>&1; then
-  echo "The page and READMEs must not contain the word 'polymarket'; use 'market'." >&2
-  grep -RIn -i 'polymarket' "$ROOT/README.md" "$ROOT/README.zh-CN.md" "$ROOT/web" >&2
+wait_for_visuals() {
+  ab wait --fn 'document.fonts.status === "loaded" && [...document.images].filter((img) => { const r = img.getBoundingClientRect(); return r.width > 0 && r.height > 0 && r.bottom > 0 && r.top < window.innerHeight && r.right > 0 && r.left < window.innerWidth; }).every((img) => img.complete && img.naturalWidth > 0)' --timeout 30000 >/dev/null
+  ab wait 400 >/dev/null
+}
+
+if grep -RIn -i 'polymarket' "$ROOT/web" >/dev/null 2>&1; then
+  echo "The page must use only 'market' wording." >&2
+  grep -RIn -i 'polymarket' "$ROOT/web" >&2
   exit 1
 fi
 if ! command -v agent-browser >/dev/null 2>&1; then
@@ -122,7 +127,8 @@ ab navigate "$BASE_URL/" >/dev/null
 step "Open the market dialog and inspect the match list"
 ab wait '#market-open' --timeout 15000 >/dev/null
 if [[ -n "$DOCS_DIR" ]]; then
-  ab wait '#draft-table' --timeout 15000 >/dev/null
+  ab wait --fn 'document.querySelectorAll("#draft-table tr[data-champion-key]").length > 10' --timeout 20000 >/dev/null
+  wait_for_visuals
   ab screenshot "$DOCS_DIR/01-draft-board.png" >/dev/null
 fi
 ab click '#market-open' >/dev/null
@@ -176,6 +182,7 @@ page_assert "Game 4 lineup, source, and picks" <<'JS'
 })()
 JS
 if [[ -n "$DOCS_DIR" ]]; then
+  wait_for_visuals
   ab screenshot '#market-dialog' "$DOCS_DIR/02-market-lineup.png" >/dev/null
 fi
 
@@ -211,6 +218,7 @@ page_assert "analysis contains both teams and a winrate" <<'JS'
 })()
 JS
 if [[ -n "$DOCS_DIR" ]]; then
+  wait_for_visuals
   ab screenshot "$DOCS_DIR/03-analysis.png" >/dev/null
 fi
 
