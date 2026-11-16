@@ -1,0 +1,7 @@
+__pycache__/
+*.py[cod]
+.DS_Store
+data/*.json
+data/*.part
+node_modules/
+tests/e2e/artifacts/

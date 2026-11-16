@@ -1,0 +1,16 @@
+{
+  "name": "draftgap-rea",
+  "version": "1.0.0",
+  "private": true,
+  "description": "E2E harness for the local DraftGap model service",
+  "scripts": {
+    "test:e2e": "bash tests/e2e/run.sh",
+    "screenshots": "E2E_DOCS=1 bash tests/e2e/run.sh"
+  },
+  "devDependencies": {
+    "agent-browser": "^0.41.2"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

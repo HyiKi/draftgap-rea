@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#000000">
+<link rel="shortcut icon" type="image/x-icon" href="/assets/favicon.ico">
+<title>DraftGap - The Ultimate League of Legends Drafting Companion</title>
+<link rel="stylesheet" href="/assets/app.css">
+<link rel="stylesheet" href="/assets/ui.css">
+</head>
+<body>
+<div id="root">
+  <div class="h-screen flex flex-col" style="height:calc(var(--vh, 1vh) * 100)">
+    <header class="bg-primary px-1 py-0 border-b-2 border-neutral-700 flex justify-between">
+      <h1 class="text-4xl sm:text-5xl mr-2 ml-1 mt-1 mb-[0.4rem] font-semibold tracking-wide">DRAFTGAP</h1>
+      <div class="flex items-center gap-4">
+        <div class="text-xs text-neutral-400 hidden md:flex flex-col text-right uppercase">
+          <span id="patch-label">PATCH —</span>
+          <span id="updated-label">LAST UPDATED —</span>
+        </div>
+        <button id="market-open" class="uppercase justify-center items-center rounded-full px-3 py-0.5 text-md bg-neutral-800 text-neutral-100 font-bold hidden md:inline-flex hover:opacity-70 transition" title="Import a LoL lineup from the market" aria-haspopup="dialog">Market</button>
+        <button id="json-open" class="uppercase justify-center items-center rounded-full px-3 py-0.5 text-md bg-neutral-800 text-neutral-100 font-bold hidden md:inline-flex hover:opacity-70 transition" title="Quick JSON prediction (extension)" aria-haspopup="dialog" aria-keyshortcuts="J">Quick JSON</button>
+        <button id="sync-btn" class="uppercase justify-center items-center rounded-full px-3 py-0.5 text-md bg-neutral-100 text-neutral-800 font-bold hidden md:inline-flex hover:opacity-70 transition">Sync with league client</button>
+        <div class="flex gap-1">
+          <button id="lang-btn" type="button" class="uppercase inline-flex items-center font-medium rounded-md transition ease-in-out duration-150 hover:bg-white/10 text-xl px-1 py-2" title="Champion names" aria-label="Toggle champion names between English and Chinese">
+            <svg viewBox="0 0 24 24" fill="currentColor" stroke="none" class="w-7" aria-hidden="true"><path fill-rule="evenodd" d="M9 2.25a.75.75 0 01.75.75v1.506a49.38 49.38 0 015.343.371.75.75 0 11-.186 1.489c-.66-.083-1.323-.151-1.99-.206a18.67 18.67 0 01-2.969 6.323c.317.384.65.753.998 1.107a.75.75 0 11-1.07 1.052A18.902 18.902 0 019 13.687a18.823 18.823 0 01-5.656 4.482.75.75 0 11-.688-1.333 17.323 17.323 0 005.396-4.353A18.72 18.72 0 015.89 8.598a.75.75 0 011.388-.568A17.21 17.21 0 009 11.224a17.17 17.17 0 002.391-5.165 48.038 48.038 0 00-8.298.307.75.75 0 01-.186-1.489 49.159 49.159 0 015.343-.371V3A.75.75 0 019 2.25zM15.75 9a.75.75 0 01.68.433l5.25 11.25a.75.75 0 01-1.36.634l-1.198-2.567h-6.744l-1.198 2.567a.75.75 0 01-1.36-.634l5.25-11.25A.75.75 0 0115.75 9zm-2.672 8.25h5.344l-2.672-5.726-2.672 5.726z" clip-rule="evenodd"></path></svg>
+          </button>
+          <button id="settings-btn" type="button" class="uppercase inline-flex items-center font-medium rounded-md transition ease-in-out duration-150 hover:bg-white/10 text-xl px-1 py-2" title="Settings" aria-label="Settings" aria-haspopup="dialog">
+            <svg viewBox="0 0 24 24" fill="currentColor" stroke="none" class="w-7" aria-hidden="true"><path fill-rule="evenodd" d="M11.078 2.25c-.917 0-1.699.663-1.85 1.567L9.05 4.889c-.02.12-.115.26-.297.348a7.493 7.493 0 00-.986.57c-.166.115-.334.126-.45.083L6.3 5.508a1.875 1.875 0 00-2.282.819l-.922 1.597a1.875 1.875 0 00.432 2.385l.84.692c.095.078.17.229.154.43a7.598 7.598 0 000 1.139c.015.2-.059.352-.153.43l-.841.692a1.875 1.875 0 00-.432 2.385l.922 1.597a1.875 1.875 0 002.282.818l1.019-.382c.115-.043.283-.031.45.082.312.214.641.405.985.57.182.088.277.228.297.35l.178 1.071c.151.904.933 1.567 1.85 1.567h1.844c.916 0 1.699-.663 1.85-1.567l.178-1.072c.02-.12.114-.26.297-.349.344-.165.673-.356.985-.57.167-.114.335-.125.45-.082l1.02.382a1.875 1.875 0 002.28-.819l.923-1.597a1.875 1.875 0 00-.432-2.385l-.84-.692c-.095-.078-.17-.229-.154-.43a7.614 7.614 0 000-1.139c-.016-.2.059-.352.153-.43l.84-.692c.708-.582.891-1.59.433-2.385l-.922-1.597a1.875 1.875 0 00-2.282-.818l-1.02.382c-.114.043-.282.031-.449-.083a7.49 7.49 0 00-.985-.57c-.183-.087-.277-.227-.297-.348l-.179-1.072a1.875 1.875 0 00-1.85-1.567h-1.843zM12 15.75a3.75 3.75 0 100-7.5 3.75 3.75 0 000 7.5z" clip-rule="evenodd"></path></svg>
+          </button>
+          <button id="menu-btn" type="button" class="uppercase inline-flex items-center font-medium rounded-md transition ease-in-out duration-150 hover:bg-white/10 text-xl px-1 py-2" title="Menu" aria-label="Main menu" aria-haspopup="menu">
+            <svg viewBox="0 0 24 24" fill="currentColor" stroke="none" class="w-7" aria-hidden="true"><path fill-rule="evenodd" d="M10.5 6a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0zm0 6a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0zm0 6a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0z" clip-rule="evenodd"></path></svg>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <div class="lg:hidden bg-primary border-b border-neutral-700 px-3 py-2">
+      <div id="mobile-picks"></div>
+    </div>
+
+    <main id="desktop-main" class="h-full lg:grid overflow-hidden hidden" style="grid-template-columns:1fr 4fr 1fr;grid-template-rows:100%">
+      <aside id="ally-sidebar" class="bg-primary flex flex-col h-full relative"></aside>
+
+      <section class="bg-[#101010] flex-1 overflow-auto overflow-x-hidden h-full flex flex-col">
+        <div class="flex flex-col min-h-full flex-1">
+          <div class="bg-primary w-full border-b border-neutral-700 hidden lg:block xl:px-8">
+            <div role="tablist" aria-label="Draft views" id="draft-tablist">
+              <button role="tab" id="tab-draft-btn" aria-controls="tab-draft" aria-selected="true" tabindex="0" data-tab="draft" class="tab-btn px-4 py-3 uppercase font-semibold text-neutral-50">Draft</button>
+              <button role="tab" id="tab-analysis-btn" aria-controls="tab-analysis" aria-selected="false" tabindex="-1" data-tab="analysis" class="tab-btn px-4 py-3 text-neutral-500 uppercase font-semibold hover:text-neutral-400">Draft Analysis</button>
+            </div>
+          </div>
+          <div id="tab-draft" role="tabpanel" aria-labelledby="tab-draft-btn" class="py-3 lg:py-5 px-4 xl:px-8 h-full overflow-y-hidden flex flex-col">
+            <div class="mb-4 flex gap-4">
+              <search class="flex rounded-md flex-1">
+                <label for="draftTableSearch" class="visually-hidden">Search champions</label>
+                <div class="relative flex grow items-stretch">
+                  <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-5 w-5 text-gray-400" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"></path></svg>
+                  </div>
+                  <input id="draftTableSearch" type="search" class="text-lg py-1 block w-full rounded-md border-gray-301 pl-10 bg-neutral-800 placeholder:text-neutral-500 text-neutral-100" placeholder="SEARCH" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" enterkeyhint="search">
+                </div>
+              </search>
+              <div class="hidden lg:flex">
+                <span class="isolate inline-flex rounded-md shadow-xs" role="group" aria-label="Team being edited">
+                  <button id="side-ally" type="button" class="side-btn text-lg relative inline-flex items-center border text-neutral-300 border-neutral-700 bg-primary px-3 py-1 font-medium hover:bg-neutral-800 uppercase rounded-l-md" aria-pressed="true">ally</button>
+                  <button id="side-opponent" type="button" class="side-btn text-lg relative inline-flex items-center border text-neutral-300 border-neutral-700 bg-primary px-3 py-1 font-medium hover:bg-neutral-800 uppercase rounded-r-md -ml-px" aria-pressed="false">opponent</button>
+                </span>
+              </div>
+              <span id="role-filter" role="group" aria-label="Filter by role" class="isolate rounded-md shadow-xs hidden lg:inline-flex"></span>
+              <div class="hidden lg:inline-flex gap-3">
+                <button id="favorites-btn" type="button" class="uppercase inline-flex items-center font-medium rounded-md transition ease-in-out duration-150 hover:bg-white/10 py-1 text-xl px-1" title="Show favourites only" aria-label="Show favourites only" aria-pressed="false">
+                  <svg viewBox="0 0 24 24" fill="currentColor" stroke="none" class="w-6 text-neutral-300" aria-hidden="true"><path fill-rule="evenodd" d="M3.792 2.938A49.069 49.069 0 0112 2.25c2.797 0 5.54.236 8.209.688a1.857 1.857 0 011.541 1.836v1.044a3 3 0 01-.879 2.121l-6.182 6.182a1.5 1.5 0 00-.439 1.061v2.927a3 3 0 01-1.658 2.684l-1.757.878A.75.75 0 019.75 21v-5.818a1.5 1.5 0 00-.44-1.06L3.13 7.938a3 3 0 01-.879-2.121V4.774c0-.897.64-1.683 1.542-1.836z" clip-rule="evenodd"></path></svg>
+                </button>
+              </div>
+            </div>
+            <div id="draft-table" class="rounded-md overflow-auto max-h-full max-w-full" role="region" aria-label="Champion suggestions"></div>
+            <p id="draft-table-status" class="visually-hidden" role="status" aria-live="polite"></p>
+          </div>
+          <div id="tab-analysis" role="tabpanel" aria-labelledby="tab-analysis-btn" tabindex="0" class="py-5 px-4 xl:px-8 h-full overflow-y-auto" hidden>
+            <div id="analysis-body"></div>
+          </div>
+        </div>
+      </section>
+
+      <aside id="opponent-sidebar" class="bg-primary flex flex-col h-full relative"></aside>
+    </main>
+  </div>
+</div>
+
+<dialog id="json-dialog" class="ui-dialog ui-dialog--json" aria-labelledby="json-title" closedby="any">
+  <div class="ui-dialog-head">
+    <div>
+      <h2 id="json-title" class="text-3xl uppercase">Quick JSON prediction</h2>
+      <p id="json-help" class="text-neutral-400 text-sm mt-1">Paste a draft with <code>allies</code> and <code>opponents</code>. Roles are optional; champion ids, DDragon ids, English and Chinese names all work.</p>
+    </div>
+    <button id="json-close" type="button" class="ui-icon-btn" aria-label="Close quick JSON prediction" title="Close">×</button>
+  </div>
+  <div class="ui-dialog-body">
+    <form id="json-form" novalidate>
+      <label for="json-input" class="ui-field-label">Draft JSON</label>
+      <textarea id="json-input" name="draft" class="ui-textarea" spellcheck="false" autocapitalize="none" autocomplete="off" autocorrect="off" aria-describedby="json-help" data-error="json-error" autofocus required></textarea>
+      <p id="json-error" class="ui-field-error" hidden></p>
+      <div class="ui-actions">
+        <button id="json-predict" type="submit" class="ui-btn ui-btn--primary">Predict</button>
+        <button id="json-format" type="button" class="ui-btn">Format</button>
+        <button id="json-sample" type="button" class="ui-btn">Load sample</button>
+        <button id="json-to-board" type="button" class="ui-btn">Load into board</button>
+        <button id="json-copy" type="button" class="ui-btn" disabled>Copy result</button>
+      </div>
+      <p class="ui-shortcut-hint">Press <kbd>⌘</kbd>/<kbd>Ctrl</kbd> + <kbd>Enter</kbd> to predict · <kbd>Esc</kbd> to close</p>
+    </form>
+    <div id="json-status" class="ui-status"></div>
+    <div id="json-live" class="visually-hidden" aria-live="polite"></div>
+    <div id="json-result" class="ui-result"></div>
+  </div>
+</dialog>
+
+<dialog id="market-dialog" class="ui-dialog ui-dialog--market" aria-labelledby="pm-title" closedby="any">
+  <div class="ui-dialog-head">
+    <div>
+      <h2 id="pm-title" class="text-3xl uppercase">LoL market lineups</h2>
+      <p class="ui-help">Pick a match, choose a game, then load the published lineup into DraftGap. Live drafts come from the market; finished games may use Leaguepedia's archive.</p>
+    </div>
+    <button id="pm-close" type="button" class="ui-icon-btn" aria-label="Close market lineups" title="Close">×</button>
+  </div>
+  <div class="ui-dialog-body pm-body">
+    <div class="pm-layout">
+      <section class="pm-panel pm-matches-panel" aria-labelledby="pm-matches-title">
+        <div class="pm-panel-head">
+          <h3 id="pm-matches-title">Matches</h3>
+          <button id="pm-refresh" type="button" class="ui-btn pm-refresh">Refresh</button>
+        </div>
+        <p id="pm-list-status" class="ui-status pm-list-status" role="status" aria-live="polite">Loading LoL matches…</p>
+        <div id="pm-matches" class="pm-match-list"></div>
+      </section>
+      <section class="pm-panel pm-detail-panel" aria-labelledby="pm-detail-title">
+        <h3 id="pm-detail-title" class="visually-hidden">Match detail</h3>
+        <div id="pm-detail" class="pm-detail">
+          <p class="pm-empty">Choose a match to see its games and lineups.</p>
+        </div>
+      </section>
+    </div>
+    <div id="pm-live" class="visually-hidden" aria-live="polite"></div>
+  </div>
+</dialog>
+
+<dialog id="settings-dialog" class="ui-dialog ui-dialog--settings" aria-labelledby="settings-title" closedby="any">
+  <div class="ui-dialog-head">
+    <h2 id="settings-title" class="text-3xl uppercase">Settings</h2>
+    <button id="settings-close" type="button" class="ui-icon-btn" aria-label="Close settings" title="Close">×</button>
+  </div>
+  <form id="settings-form" class="ui-dialog-body ui-form">
+    <fieldset class="ui-fieldset">
+      <legend>Model priors</legend>
+      <label for="risk-select" class="ui-field-label">Risk level</label>
+      <select id="risk-select" name="risk" class="ui-select">
+        <option value="very-low">Very low (3000)</option>
+        <option value="low">Low (2000)</option>
+        <option value="medium">Medium (1000)</option>
+        <option value="high">High (500)</option>
+        <option value="very-high">Very high (250)</option>
+      </select>
+      <p class="ui-help">Lower risk shrinks champion winrates toward 50% more aggressively.</p>
+    </fieldset>
+    <fieldset class="ui-fieldset">
+      <legend>Suggestion filter</legend>
+      <label for="min-games-select" class="ui-field-label">Minimum game count (7d)</label>
+      <select id="min-games-select" name="minGames" class="ui-select">
+        <option value="500">500</option>
+        <option value="1000">1000</option>
+        <option value="2500">2500</option>
+        <option value="5000">5000</option>
+      </select>
+    </fieldset>
+    <label class="ui-check" for="ignore-base">
+      <input id="ignore-base" name="ignoreBase" type="checkbox" class="ui-checkbox">
+      <span>Ignore champion base winrates</span>
+    </label>
+    <p class="ui-help">These settings affect both the draft page and Quick JSON predictions.</p>
+  </form>
+</dialog>
+
+<div id="context-menu" role="menu" aria-label="Context menu" class="fixed z-[60] hidden"></div>
+<div id="toast" role="status" aria-live="polite" aria-atomic="true" class="fixed bottom-5 left-1/2 -translate-x-1/2 z-[70] hidden rounded-md bg-neutral-100 text-neutral-900 px-4 py-2 font-bold uppercase text-sm shadow-lg" title="Click to dismiss"></div>
+
+<script src="/assets/app.js"></script>
+</body>
+</html>

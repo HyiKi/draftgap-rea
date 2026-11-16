@@ -1,0 +1,36 @@
+{
+  "ok": true,
+  "fetchedAt": "2026-11-16T11:51:26.234247Z",
+  "source": {
+    "provider": "Market",
+    "label": "Market LoL",
+    "url": "https://polymarket.com/esports/league-of-legends"
+  },
+  "matches": [
+    {
+      "id": "1345375",
+      "slug": "lol-blg-gen-2026-11-14",
+      "title": "LoL: Bilibili Gaming vs Gen.G (BO5) - Worlds Playoffs",
+      "competition": "Worlds Playoffs",
+      "startTime": "2026-11-14T19:40:00Z",
+      "endTime": "2026-11-15T01:40:00Z",
+      "state": "recent",
+      "bestOf": 5,
+      "score": "3-1",
+      "teams": [
+        {
+          "name": "Bilibili Gaming",
+          "abbreviation": "blg",
+          "score": null
+        },
+        {
+          "name": "Gen.G",
+          "abbreviation": "gen",
+          "score": null
+        }
+      ],
+      "url": "https://polymarket.com/event/lol-blg-gen-2026-11-14"
+    }
+  ],
+  "notes": []
+}

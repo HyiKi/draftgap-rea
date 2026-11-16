@@ -1,0 +1,12 @@
+{
+  "allies": [
+    { "champion": "Maokai", "role": "top" },
+    { "champion": "Viego", "role": "jungle" },
+    { "champion": "Karthus", "role": "middle" }
+  ],
+  "opponents": [
+    { "champion": "Camille", "role": "top" },
+    { "champion": "Lee Sin", "role": "jungle" }
+  ],
+  "suggestions": 5
+}

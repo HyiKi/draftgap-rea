@@ -1,0 +1,17 @@
+{
+  "allies": [
+    { "champion": "Maokai", "role": "top" },
+    { "champion": "Viego", "role": "jungle" },
+    { "champion": "Karthus", "role": "middle" },
+    { "champion": "Kalista", "role": "bottom" },
+    { "champion": "Thresh", "role": "support" }
+  ],
+  "opponents": [
+    { "champion": "Camille", "role": "top" },
+    { "champion": "Lee Sin", "role": "jungle" },
+    { "champion": "Seraphine", "role": "middle" },
+    { "champion": "Kai'Sa", "role": "bottom" },
+    { "champion": "Soraka", "role": "support" }
+  ],
+  "suggestions": 10
+}
