@@ -1,0 +1,46 @@
+{
+  "ok": true,
+  "fetchedAt": "2026-11-17T04:53:43.900221Z",
+  "source": {
+    "provider": "Market",
+    "label": "Market LoL",
+    "url": "https://polymarket.com/esports/league-of-legends"
+  },
+  "matches": [
+    {
+      "id": "1262200",
+      "slug": "lol-los-tsw-2026-10-26",
+      "title": "LoL: LOS vs Team Secret Whales (BO3) - Worlds Group Stage",
+      "competition": "Worlds Group Stage",
+      "startTime": "2026-10-26T19:00:00Z",
+      "endTime": "2026-10-26T22:10:00Z",
+      "state": "recent",
+      "bestOf": 3,
+      "score": "2-3",
+      "teams": [
+        {
+          "name": "LOS",
+          "abbreviation": "los",
+          "score": null
+        },
+        {
+          "name": "Team Secret Whales",
+          "abbreviation": "tsw",
+          "score": null
+        }
+      ],
+      "url": "https://polymarket.com/event/lol-los-tsw-2026-10-26"
+    }
+  ],
+  "notes": [
+    "No live or upcoming LoL matches are listed right now; recent results are shown."
+  ],
+  "pagination": {
+    "page": 2,
+    "pageSize": 5,
+    "total": 6,
+    "totalPages": 2,
+    "hasPrevious": true,
+    "hasNext": false
+  }
+}

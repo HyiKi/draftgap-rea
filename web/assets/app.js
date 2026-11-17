@@ -89,6 +89,14 @@ const state = {
     matches: [],
     notes: [],
     listError: null,
+    page: 1,
+    pageSize: 5,
+    pendingPage: null,
+    total: null,
+    totalPages: null,
+    hasPrevious: false,
+    hasNext: false,
+    pageCache: new Map(),
     selectedSlug: null,
     detail: null,
     detailLoading: false,
@@ -1428,6 +1436,7 @@ function openMarket() {
   } else {
     renderMarketListStatus();
     renderMarketMatches();
+    renderMarketPager();
     renderMarketDetail();
   }
   requestAnimationFrame(() => {
@@ -1441,16 +1450,36 @@ function closeMarket() {
   if (dialog.open) dialog.close();
 }
 
+function pmPageLabel() {
+  const pm = state.market;
+  return Number.isInteger(pm.totalPages) ? `Page ${pm.page} of ${pm.totalPages}` : `Page ${pm.page}`;
+}
+
 function renderMarketListStatus() {
   const node = $('pm-list-status');
   if (!node) return;
   const pm = state.market;
-  if (pm.loading) node.textContent = 'Loading LoL matches…';
-  else if (pm.listError) node.textContent = `Could not load matches. ${pm.listError}`;
-  else if (!pm.loaded) node.textContent = 'Loading LoL matches…';
-  else if (!pm.matches.length) node.textContent = 'No LoL matches are listed right now.';
-  else if (pm.notes.length) node.textContent = pm.notes[0];
-  else node.textContent = `${pm.matches.length} ${pm.matches.length === 1 ? 'match' : 'matches'} available. Live drafts come from the market; finished games use the archive when needed.`;
+  if (pm.loading) {
+    const page = pm.pendingPage || pm.page;
+    node.textContent = pm.loaded ? `Loading matches page ${page}…` : 'Loading LoL matches…';
+  } else if (pm.listError) {
+    node.textContent = `Could not load matches. ${pm.listError}`;
+  } else if (!pm.loaded) {
+    node.textContent = 'Loading LoL matches…';
+  } else if (pm.total === 0) {
+    node.textContent = 'No LoL matches are listed right now.';
+  } else {
+    const hasTotal = Number.isInteger(pm.total);
+    const first = pm.matches.length ? (pm.page - 1) * pm.pageSize + 1 : 0;
+    const last = pm.matches.length ? first + pm.matches.length - 1 : 0;
+    const summary = pm.matches.length
+      ? `Showing ${first}–${last}${hasTotal ? ` of ${pm.total}` : ''} matches.`
+      : (hasTotal ? `${pm.total} matches available.` : 'No matches on this page.');
+    const more = !hasTotal && pm.hasNext ? ' More matches are available.' : '';
+    node.textContent = pm.notes.length
+      ? `${summary}${more} ${pm.notes[0]}`
+      : `${summary}${more} Live drafts come from the market; finished games use the archive when needed.`;
+  }
   const refresh = $('pm-refresh');
   if (refresh) {
     refresh.disabled = pm.loading;
@@ -1482,25 +1511,30 @@ function renderMarketMatches() {
   const root = $('pm-matches');
   if (!root) return;
   const pm = state.market;
+  root.toggleAttribute('aria-busy', pm.loading);
   if (!pm.matches.length) {
     root.innerHTML = pm.loading
       ? '<p class="pm-empty">Loading matches…</p>'
       : `<p class="pm-empty">${pm.listError ? 'The market could not be reached. Check the server proxy setting and try Refresh.' : 'No matches to display.'}</p>`;
     return;
   }
-  const groups = [
-    ['live', 'Live now'],
-    ['upcoming', 'Upcoming'],
-    ['recent', 'Recent results'],
-  ];
-  root.innerHTML = groups.map(([key, label]) => {
-    const matches = pm.matches.filter((match) => match.state === key);
-    if (!matches.length) return '';
-    return `<section class="pm-match-group" aria-label="${esc(label)}">
-      <h4>${esc(label)} <span>${matches.length}</span></h4>
-      ${matches.map(pmMatchButton).join('')}
-    </section>`;
-  }).join('');
+  root.innerHTML = pm.matches.map(pmMatchButton).join('');
+}
+
+function renderMarketPager() {
+  const root = $('pm-pager');
+  if (!root) return;
+  const pm = state.market;
+  if (!pm.loaded || pm.listError || pm.total === 0) {
+    root.hidden = true;
+    root.innerHTML = '';
+    return;
+  }
+  root.hidden = false;
+  root.innerHTML = `
+    <button type="button" class="ui-btn pm-page-btn" data-pm-page="${pm.page - 1}" aria-controls="pm-matches" aria-label="Previous matches page"${pm.hasPrevious && !pm.loading ? '' : ' disabled'}>Previous</button>
+    <span class="pm-page-status" role="status" aria-live="polite">${pmPageLabel()}</span>
+    <button type="button" class="ui-btn pm-page-btn" data-pm-page="${pm.page + 1}" aria-controls="pm-matches" aria-label="Next matches page"${pm.hasNext && !pm.loading ? '' : ' disabled'}>Next</button>`;
 }
 
 function pmGameButtons(detail) {
@@ -1687,40 +1721,70 @@ function renderMarketDetail() {
   renderMarketLineup();
 }
 
-async function loadMarketMatches(force = false) {
+function applyMarketPage(data, fallbackPage) {
+  const pm = state.market;
+  const pagination = data.pagination || {};
+  pm.loaded = true;
+  pm.loading = false;
+  pm.pendingPage = null;
+  pm.listError = null;
+  pm.matches = Array.isArray(data.matches) ? data.matches : [];
+  pm.notes = Array.isArray(data.notes) ? data.notes : [];
+  const previousTotal = pm.total;
+  const previousTotalPages = pm.totalPages;
+  pm.page = Number.isInteger(pagination.page) ? pagination.page : fallbackPage;
+  pm.pageSize = Number.isInteger(pagination.pageSize) ? pagination.pageSize : pm.pageSize;
+  pm.total = Number.isInteger(pagination.total) ? pagination.total : previousTotal;
+  pm.totalPages = Number.isInteger(pagination.totalPages) ? pagination.totalPages : previousTotalPages;
+  pm.hasPrevious = pagination.hasPrevious === true;
+  pm.hasNext = pagination.hasNext === true;
+}
+
+async function loadMarketMatches(page = state.market.page, force = false) {
   const pm = state.market;
   if (pm.loading) return;
+  const targetPage = Math.max(1, Number(page) || 1);
+  if (force) {
+    pm.pageCache.clear();
+    pm.total = null;
+    pm.totalPages = null;
+  }
+  const cached = force ? null : pm.pageCache.get(targetPage);
+  if (cached) {
+    applyMarketPage(cached, targetPage);
+    renderMarketListStatus();
+    renderMarketMatches();
+    renderMarketPager();
+    announceMarket(`${pmPageLabel()}: ${pm.matches.length} matches loaded.`);
+    return;
+  }
   pm.loading = true;
+  pm.pendingPage = targetPage;
   pm.listError = null;
   renderMarketListStatus();
   renderMarketMatches();
+  renderMarketPager();
   const seq = ++pm.listSeq;
   try {
-    const data = await api(`/api/market/matches?limit=24${force ? '&refresh=1' : ''}`);
+    const data = await api(`/api/market/matches?page=${targetPage}&limit=${pm.pageSize}${force ? '&refresh=1' : ''}`);
     if (seq !== pm.listSeq) return;
-    pm.loading = false;
-    pm.loaded = true;
-    pm.matches = Array.isArray(data.matches) ? data.matches : [];
-    pm.notes = Array.isArray(data.notes) ? data.notes : [];
+    pm.pageCache.set(targetPage, data);
+    applyMarketPage(data, targetPage);
+    pm.pageCache.set(pm.page, data);
     renderMarketListStatus();
     renderMarketMatches();
-    announceMarket(`${pm.matches.length} LoL matches loaded.`);
-    const selectedStillListed = pm.matches.some((match) => match.slug === pm.selectedSlug);
-    if (!selectedStillListed) {
-      pm.selectedSlug = null;
-      pm.detail = null;
-      pm.selectedGame = null;
-      pm.lineup = null;
-      if (pm.matches.length) await selectMarketMatch(pm.matches[0].slug);
-      else renderMarketDetail();
-    }
+    renderMarketPager();
+    announceMarket(`${pmPageLabel()}: ${pm.matches.length} matches loaded.`);
+    if (!pm.selectedSlug) renderMarketDetail();
   } catch (error) {
     if (seq !== pm.listSeq) return;
     pm.loading = false;
+    pm.pendingPage = null;
     pm.loaded = true;
     pm.listError = pmErrorText(error);
     renderMarketListStatus();
     renderMarketMatches();
+    renderMarketPager();
     announceMarket('Could not load matches.');
   }
 }
@@ -1906,11 +1970,19 @@ function wireEvents() {
   document.querySelectorAll('.tab-btn').forEach((button) => button.addEventListener('click', () => selectTab(button.dataset.tab)));
   $('market-open').addEventListener('click', openMarket);
   $('pm-close').addEventListener('click', closeMarket);
-  $('pm-refresh').addEventListener('click', () => loadMarketMatches(true));
+  $('pm-refresh').addEventListener('click', () => loadMarketMatches(1, true));
   $('pm-matches').addEventListener('click', (event) => {
     const button = event.target.closest('[data-pm-match]');
     if (!button) return;
     selectMarketMatch(button.dataset.pmMatch);
+  });
+  $('pm-pager').addEventListener('click', async (event) => {
+    const button = event.target.closest('[data-pm-page]');
+    if (!button || button.disabled) return;
+    await loadMarketMatches(Number(button.dataset.pmPage));
+    if (!state.market.listError) {
+      requestAnimationFrame(() => $('pm-matches')?.querySelector('[data-pm-match]')?.focus());
+    }
   });
   $('pm-detail').addEventListener('click', (event) => {
     const game = event.target.closest('[data-pm-game]');

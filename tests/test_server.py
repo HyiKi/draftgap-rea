@@ -156,6 +156,7 @@ class ServerContractTests(unittest.TestCase):
         self.assertIn(b'id="market-open"', raw)
         self.assertIn(b'id="market-dialog"', raw)
         self.assertIn(b'id="pm-matches"', raw)
+        self.assertIn(b'id="pm-pager"', raw)
 
         status, headers, raw = self.request("GET", "/assets/app.css")
         self.assertEqual(status, 200)
@@ -239,6 +240,9 @@ class ServerContractTests(unittest.TestCase):
             ("/api/market/matches?limit=abc", 400, "invalid_limit"),
             ("/api/market/matches?limit=0", 400, "invalid_limit"),
             ("/api/market/matches?limit=41", 400, "invalid_limit"),
+            ("/api/market/matches?page=abc", 400, "invalid_page"),
+            ("/api/market/matches?page=0", 400, "invalid_page"),
+            ("/api/market/matches?page=-1", 400, "invalid_page"),
             ("/api/market/match", 400, "missing_slug"),
             ("/api/market/lineup?slug=x", 400, "missing_game"),
             ("/api/market/lineup?slug=x&game=abc", 400, "invalid_game"),

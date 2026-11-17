@@ -115,6 +115,79 @@ FINAL_SERIES = {
     ],
 }
 
+SWEEP_EVENT = {
+    "id": "1345401",
+    "slug": "lol-nh-sgw-2026-11-16",
+    "title": "LoL: Nothin'Here vs Saigon Warriors (BO5) - LCP Promotion Playoffs",
+    "gameId": "1711099",
+    "live": False,
+    "closed": True,
+    "ended": True,
+    "startTime": "2026-11-16T08:00:00Z",
+    "endTime": "2026-11-16T11:00:00Z",
+    "period": "3/5",
+    "score": "000-000|0-3|Bo5",
+    "teams": [
+        {
+            "id": "9001",
+            "name": "Nothin'Here",
+            "abbreviation": "nh",
+            "host": "home",
+            "score": 0,
+        },
+        {
+            "id": "9002",
+            "name": "Saigon Warriors",
+            "abbreviation": "sgw",
+            "host": "away",
+            "score": 3,
+        },
+    ],
+    "metadata": {"gridSeriesId": "3012999"},
+    "marketGroups": [
+        {
+            "id": "child_moneyline",
+            "sportsMarketType": "child_moneyline",
+            "markets": [
+                {
+                    "title": f"Game {number} Winner",
+                    "slug": f"lol-nh-sgw-2026-11-16-game{number}",
+                    "closed": True,
+                    "marketSides": (
+                        [
+                            {"label": "Saigon Warriors", "won": True},
+                            {"label": "Nothin'Here", "won": False},
+                        ]
+                        if number <= 3
+                        else []
+                    ),
+                }
+                for number in range(1, 5)
+            ],
+        }
+    ],
+}
+
+SWEEP_SERIES = {
+    "format": "best-of-5",
+    "teams": [
+        {"id": "9001", "name": "Nothin'Here", "score": 0},
+        {"id": "9002", "name": "Saigon Warriors", "score": 3},
+    ],
+    "games": [
+        {
+            "sequenceNumber": number,
+            "started": True,
+            "finished": True,
+            "teams": [
+                {"id": "9001", "score": 9, "won": False},
+                {"id": "9002", "score": 18, "won": True},
+            ],
+        }
+        for number in range(1, 4)
+    ],
+}
+
 ARCHIVE_ROW = {
     "OverviewPage": "2026 Season World Championship/Main Event",
     "MatchId": "2026 Season World Championship/Main Event_Finals_1",
@@ -260,6 +333,83 @@ class MarketServiceTests(unittest.TestCase):
         self.assertTrue(dgm._team_names_match("Bilibili Gaming", "BILIBILI GAMING"))
         self.assertFalse(dgm._team_names_match("Gen.G", "T1"))
 
+    def test_matches_paginate_newest_first(self) -> None:
+        service = self.service()
+        events = []
+        for index in range(1, 13):
+            events.append(
+                {
+                    "id": str(index),
+                    "slug": f"lol-pagination-{index}",
+                    "title": f"LoL: Team {index} vs Team {index + 1} (BO3) - Pagination",
+                    "gameId": str(1000 + index),
+                    "closed": True,
+                    "startTime": f"2026-11-{index:02d}T12:00:00Z",
+                    "teams": [
+                        {"id": str(index), "name": f"Team {index}"},
+                        {"id": str(index + 1), "name": f"Team {index + 1}"},
+                    ],
+                }
+            )
+        calls = []
+
+        def gamma(params):
+            calls.append(dict(params))
+            if params.get("active") == "true":
+                return []
+            offset = int(params.get("offset") or 0)
+            limit = int(params.get("limit") or 0)
+            ordered = sorted(
+                events, key=lambda event: event["startTime"], reverse=True
+            )
+            return ordered[offset : offset + limit]
+
+        service._gamma_events = gamma  # type: ignore[method-assign]
+        first = service.matches(5, 1)
+        closed_calls = [call for call in calls if call.get("active") != "true"]
+        self.assertEqual(len(closed_calls), 1)
+        self.assertEqual(closed_calls[0]["offset"], "0")
+        self.assertEqual(closed_calls[0]["limit"], "6")
+        self.assertEqual(
+            [match["slug"] for match in first["matches"]],
+            [f"lol-pagination-{index}" for index in range(12, 7, -1)],
+        )
+        self.assertIsNone(first["pagination"]["total"])
+        self.assertIsNone(first["pagination"]["totalPages"])
+        self.assertFalse(first["pagination"]["hasPrevious"])
+        self.assertTrue(first["pagination"]["hasNext"])
+
+        second = service.matches(5, 2)
+        closed_calls = [call for call in calls if call.get("active") != "true"]
+        self.assertEqual(len(closed_calls), 2)
+        self.assertEqual(closed_calls[1]["offset"], "5")
+        self.assertEqual(
+            [match["slug"] for match in second["matches"]],
+            [f"lol-pagination-{index}" for index in range(7, 2, -1)],
+        )
+        self.assertEqual(second["pagination"]["page"], 2)
+        self.assertTrue(second["pagination"]["hasPrevious"])
+        self.assertTrue(second["pagination"]["hasNext"])
+
+        third = service.matches(5, 3)
+        closed_calls = [call for call in calls if call.get("active") != "true"]
+        self.assertEqual(len(closed_calls), 3)
+        self.assertEqual(closed_calls[2]["offset"], "10")
+        self.assertEqual(
+            [match["slug"] for match in third["matches"]],
+            ["lol-pagination-2", "lol-pagination-1"],
+        )
+        self.assertEqual(third["pagination"]["page"], 3)
+        self.assertEqual(third["pagination"]["total"], 12)
+        self.assertEqual(third["pagination"]["totalPages"], 3)
+        self.assertTrue(third["pagination"]["hasPrevious"])
+        self.assertFalse(third["pagination"]["hasNext"])
+
+        self.assertEqual(service.matches(5, 99)["pagination"]["page"], 3)
+        self.assertTrue(
+            all(call.get("include_markets") == "false" for call in calls)
+        )
+
     def test_final_event_lists_only_played_games_and_series_results(self) -> None:
         service = self.service()
         service._event_view = lambda slug: FINAL_EVENT  # type: ignore[method-assign]
@@ -276,6 +426,40 @@ class MarketServiceTests(unittest.TestCase):
         self.assertEqual(
             [(game["homeKills"], game["awayKills"]) for game in detail["games"]],
             [(4, 19), (19, 14), (20, 8), (21, 11)],
+        )
+
+    def test_finished_sweep_hides_unplayed_game(self) -> None:
+        service = self.service()
+        service._event_view = lambda slug: SWEEP_EVENT  # type: ignore[method-assign]
+        service._series_state = lambda series_id: SWEEP_SERIES  # type: ignore[method-assign]
+        detail = service.match("lol-nh-sgw-2026-11-16")
+        self.assertEqual(detail["state"], "finished")
+        self.assertEqual(detail["score"], "0-3")
+        self.assertEqual([game["number"] for game in detail["games"]], [1, 2, 3])
+        self.assertEqual(
+            [game["winnerSide"] for game in detail["games"]],
+            ["away", "away", "away"],
+        )
+
+        no_series = self.service()
+        no_series._event_view = lambda slug: SWEEP_EVENT  # type: ignore[method-assign]
+        no_series._series_state = lambda series_id: None  # type: ignore[method-assign]
+        detail = no_series.match("lol-nh-sgw-2026-11-16")
+        self.assertEqual([game["number"] for game in detail["games"]], [1, 2, 3])
+        self.assertEqual(
+            [game["winnerSide"] for game in detail["games"]],
+            ["away", "away", "away"],
+        )
+
+        unscored_event = {**SWEEP_EVENT, "score": "000-000|0-0|Bo5"}
+        unscored = self.service()
+        unscored._event_view = lambda slug: unscored_event  # type: ignore[method-assign]
+        unscored._series_state = lambda series_id: None  # type: ignore[method-assign]
+        detail = unscored.match("lol-nh-sgw-2026-11-16")
+        self.assertEqual([game["number"] for game in detail["games"]], [1, 2, 3])
+        self.assertEqual(
+            [game["winnerSide"] for game in detail["games"]],
+            ["away", "away", "away"],
         )
 
     def test_finished_game_falls_back_to_leaguepedia_with_provenance(self) -> None:

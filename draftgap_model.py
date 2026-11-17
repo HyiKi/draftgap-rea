@@ -1912,6 +1912,7 @@ POLYMARKET_INTERNAL_API = "https://api.defi.polymarket.com"
 POLYMARKET_WS_HOST = "ws-live-v2.polymarket.com"
 POLYMARKET_WS_PATH = "/ws"
 POLYMARKET_LOL_SERIES_ID = "10311"
+_MARKET_MATCH_LIMIT = 40
 LEAGUEPEDIA_API = "https://lol.fandom.com/api.php"
 _SLUG_RE = re.compile(r"^[a-z0-9][a-z0-9-]{0,199}$")
 _UPSTREAM_JSON_LIMIT = 16 * 1024 * 1024
@@ -2481,16 +2482,20 @@ class _MarketService:
 
     # -- match discovery -----------------------------------------------------
 
-    def matches(self, limit: int = 24, *, refresh: bool = False) -> dict[str, Any]:
-        limit = max(1, min(int(limit), 40))
-        if refresh:
-            self._clear_cache("matches:")
-        return self._cached(
-            f"matches:{limit}", 20.0, lambda: self._load_matches(limit)
+    @staticmethod
+    def _match_start_key(match: Mapping[str, Any]) -> tuple[float, str]:
+        start = _parse_iso(match.get("startTime"))
+        return (
+            start.timestamp() if start else float("-inf"),
+            str(match.get("slug") or ""),
         )
 
-    def _load_matches(self, limit: int) -> dict[str, Any]:
-        open_events = self._gamma_events(
+    def _match_open_summaries(self, now: datetime) -> list[dict[str, Any]]:
+        key = "matches:open"
+        cached = self._cache_get(key)
+        if cached is not None:
+            return cached
+        events = self._gamma_events(
             {
                 "series_id": POLYMARKET_LOL_SERIES_ID,
                 "active": "true",
@@ -2498,49 +2503,86 @@ class _MarketService:
                 "limit": "50",
                 "order": "startTime",
                 "ascending": "true",
+                "include_markets": "false",
             }
         )
-        closed_events = self._gamma_events(
-            {
-                "series_id": POLYMARKET_LOL_SERIES_ID,
-                "closed": "true",
-                "limit": str(max(20, min(limit * 2, 40))),
-                "order": "startTime",
-                "ascending": "false",
-            }
-        )
-        now = datetime.now(timezone.utc)
-        by_slug: dict[str, dict[str, Any]] = {}
-        for event in open_events:
+        summaries: list[dict[str, Any]] = []
+        for event in events:
             summary = self._match_summary(event, now)
             if summary is None or summary["state"] == "recent":
                 # Gamma still lists some long-finished LoL events as open.
                 continue
-            by_slug.setdefault(summary["slug"], summary)
-        for event in closed_events:
-            summary = self._match_summary(event, now)
-            if summary is None:
-                continue
-            by_slug.setdefault(summary["slug"], summary)
+            summaries.append(summary)
+        return self._cache_put(key, summaries, 20.0)
 
-        live = sorted(
-            (item for item in by_slug.values() if item["state"] == "live"),
-            key=lambda item: item.get("startTime") or "",
+    def _match_closed_chunk(self, offset: int, page_size: int) -> dict[str, Any]:
+        key = f"matches:closed:{offset}:{page_size}"
+        cached = self._cache_get(key)
+        if cached is not None:
+            return cached
+        events = self._gamma_events(
+            {
+                "series_id": POLYMARKET_LOL_SERIES_ID,
+                "closed": "true",
+                "limit": str(page_size + 1),
+                "offset": str(offset),
+                "order": "startTime",
+                "ascending": "false",
+                "include_markets": "false",
+            }
         )
-        upcoming = sorted(
-            (item for item in by_slug.values() if item["state"] == "upcoming"),
-            key=lambda item: item.get("startTime") or "",
+        now = datetime.now(timezone.utc)
+        summaries: list[dict[str, Any]] = []
+        for event in events:
+            summary = self._match_summary(event, now)
+            if summary is not None:
+                summaries.append(summary)
+        # The extra row tells the next page whether more raw events exist,
+        # without walking the whole archive before the first page can render.
+        return self._cache_put(
+            key,
+            {"summaries": summaries, "hasMore": len(events) > page_size},
+            20.0,
         )
-        recent = sorted(
-            (item for item in by_slug.values() if item["state"] == "recent"),
-            key=lambda item: item.get("startTime") or "",
-            reverse=True,
+
+    def matches(
+        self, limit: int = 5, page: int = 1, *, refresh: bool = False
+    ) -> dict[str, Any]:
+        limit = max(1, min(int(limit), 40))
+        max_page = max(
+            1, (_MARKET_MATCH_LIMIT + limit - 1) // limit
         )
-        selected = (live + upcoming)[:20]
-        remaining = max(0, limit - len(live) - len(upcoming))
-        selected.extend(recent[:remaining])
+        page = max(1, min(int(page), max_page))
+        if refresh:
+            self._clear_cache("matches:")
+        now = datetime.now(timezone.utc)
+        by_slug = {
+            summary["slug"]: summary
+            for summary in self._match_open_summaries(now)
+        }
+        target = min(_MARKET_MATCH_LIMIT, page * limit + 1)
+        offset = 0
+        exhausted = False
+        while len(by_slug) < target and not exhausted:
+            chunk = self._match_closed_chunk(offset, limit)
+            for summary in chunk["summaries"]:
+                by_slug.setdefault(summary["slug"], summary)
+            exhausted = not chunk["hasMore"]
+            offset += limit
+
+        all_matches = sorted(
+            by_slug.values(), key=self._match_start_key, reverse=True
+        )[:_MARKET_MATCH_LIMIT]
+        capped = len(all_matches) >= _MARKET_MATCH_LIMIT
+        total: int | None = None
+        total_pages: int | None = None
+        if exhausted or capped:
+            total = len(all_matches)
+            total_pages = max(1, (total + limit - 1) // limit)
+            page = min(page, total_pages)
+        start = (page - 1) * limit
         notes: list[str] = []
-        if not live and not upcoming:
+        if not any(match["state"] in ("live", "upcoming") for match in all_matches):
             notes.append(
                 "No live or upcoming LoL matches are listed right now; "
                 "recent results are shown."
@@ -2553,8 +2595,18 @@ class _MarketService:
                 "label": "Market LoL",
                 "url": f"{POLYMARKET_WEB}/esports/league-of-legends",
             },
-            "matches": selected,
+            "matches": all_matches[start : start + limit],
             "notes": notes,
+            "pagination": {
+                "page": page,
+                "pageSize": limit,
+                "total": total,
+                "totalPages": total_pages,
+                "hasPrevious": page > 1,
+                "hasNext": (
+                    page < total_pages if total_pages is not None else True
+                ),
+            },
         }
 
     def _match_summary(
@@ -2730,7 +2782,16 @@ class _MarketService:
         best_of = _best_of_from_text(
             event.get("title"), event.get("score"), event.get("period")
         )
-        games = self._games_for_event(event, series, home, away, phase, best_of)
+        played_total = None
+        if score is not None:
+            score_match = re.fullmatch(r"(\d+)-(\d+)", score)
+            if score_match:
+                played_total = int(score_match.group(1)) + int(
+                    score_match.group(2)
+                )
+        games = self._games_for_event(
+            event, series, home, away, phase, best_of, played_total
+        )
         if best_of is None and games:
             best_of = max(game["number"] for game in games)
         notes: list[str] = []
@@ -2780,6 +2841,7 @@ class _MarketService:
         away: Mapping[str, Any],
         phase: str,
         best_of: int | None,
+        played_total: int | None,
     ) -> list[dict[str, Any]]:
         markets: dict[int, Mapping[str, Any]] = {}
         market_lists: list[Any] = []
@@ -2833,6 +2895,26 @@ class _MarketService:
         numbers = sorted(set(markets) | set(series_games))
         if not numbers and best_of:
             numbers = list(range(1, best_of + 1))
+        if phase == "finished":
+            # Closed markets can exist for a game that was never needed,
+            # such as Game 4 after a 0-3 sweep. Prefer explicit evidence that
+            # a game happened: the final score, a started series game, or a
+            # settled winner market.
+            played_numbers: set[int] = set()
+            if played_total:
+                played_numbers.update(range(1, played_total + 1))
+            played_numbers.update(
+                number
+                for number, game in series_games.items()
+                if game.get("started") or game.get("finished")
+            )
+            played_numbers.update(
+                number
+                for number, market in markets.items()
+                if _market_winner_name(market) is not None
+            )
+            if played_numbers:
+                numbers = sorted(played_numbers)
         games: list[dict[str, Any]] = []
         for number in numbers:
             market = markets.get(number)
@@ -3778,7 +3860,7 @@ def _serve(args: argparse.Namespace, model: DraftModel) -> None:
             first = lambda name: (params.get(name) or [""])[0]
             try:
                 if parsed.path == "/api/market/matches":
-                    limit_raw = first("limit") or "24"
+                    limit_raw = first("limit") or "5"
                     try:
                         limit = int(limit_raw)
                     except ValueError:
@@ -3789,8 +3871,22 @@ def _serve(args: argparse.Namespace, model: DraftModel) -> None:
                         raise _MarketError(
                             400, "invalid_limit", "limit must be between 1 and 40"
                         )
+                    page_raw = first("page") or "1"
+                    try:
+                        page = int(page_raw)
+                    except ValueError:
+                        raise _MarketError(
+                            400, "invalid_page", "page must be an integer"
+                        )
+                    if page < 1:
+                        raise _MarketError(
+                            400, "invalid_page", "page must be at least 1"
+                        )
                     refresh = first("refresh").lower() in ("1", "true", "yes")
-                    self._json(200, market_service.matches(limit, refresh=refresh))
+                    self._json(
+                        200,
+                        market_service.matches(limit, page, refresh=refresh),
+                    )
                     return
                 if parsed.path == "/api/market/match":
                     slug = first("slug")

@@ -669,31 +669,45 @@ dialog.ui-dialog--market {
   line-height: 1.4;
 }
 
+.pm-matches-panel {
+  display: flex;
+  flex-direction: column;
+}
+
 .pm-match-list {
-  max-height: calc(66dvh - 7rem);
+  flex: 1 1 auto;
+  min-height: 0;
   overflow: auto;
   overscroll-behavior: contain;
   padding-right: 0.15rem;
 }
 
-.pm-match-group + .pm-match-group {
-  margin-top: 0.85rem;
-}
-
-.pm-match-group h4 {
+.pm-pager {
   display: flex;
+  flex: none;
+  margin-top: auto;
+  align-items: center;
   justify-content: space-between;
-  margin: 0 0 0.35rem;
-  color: #a3a3a3;
-  font-size: 0.64rem;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  gap: 0.5rem;
+  padding-top: 0.55rem;
+  border-top: 1px solid #262626;
 }
 
-.pm-match-group h4 span {
-  color: #737373;
+.pm-pager[hidden] {
+  display: none;
+}
+
+.pm-page-btn {
+  min-height: 2rem;
+  padding: 0.25rem 0.6rem;
+  font-size: 0.72rem;
+}
+
+.pm-page-status {
+  color: #8a8a8a;
+  font-size: 0.72rem;
   font-variant-numeric: tabular-nums;
+  text-align: center;
 }
 
 .pm-match {
@@ -1249,6 +1263,7 @@ dialog.ui-dialog--market {
   }
 
   .pm-match-list {
+    flex: none;
     max-height: 18rem;
   }
 

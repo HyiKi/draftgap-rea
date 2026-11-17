@@ -121,8 +121,8 @@ Open <http://127.0.0.1:8765/>. The empty board matches DraftGap; click any champ
 
 Click **Market** in the header:
 
-1. **Matches** lists live, upcoming, and recently finished LoL matches.
-2. Select a match to see the games that were actually played (`Game 1/2/3…`).
+1. **Matches** lists live, upcoming, and recently finished LoL matches newest first, five per page. The Previous / Page / Next pager stays at the bottom of the panel; each page is fetched only when it is opened.
+2. Select a match to see only the games that were actually played (`Game 1/2/3…`). A BO5 that ended 0–3 does not show Game 4, and prop markets such as "Game 5 duration" are not mistaken for games.
 3. Select a game to see both lineups, players, roles, bans, source, and coverage.
 
 This walkthrough uses Game 3 of Top Esports vs Bilibili Gaming, a Worlds group-stage game that Top Esports won; the model rates the winning Top Esports draft at **57.79%**.
@@ -740,7 +740,7 @@ The service listens on `127.0.0.1:8765` by default and has no authentication. **
 
 The **Market** button in the header opens a native dialog:
 
-1. **Matches** lists live, upcoming, and recently finished matches in the LoL market series, with competition, score, and start time.
+1. **Matches** lists up to five matches per page in reverse start-time order, with competition, score, and start time. The pager sits at the bottom of the panel; **Previous** and **Next** fetch a page only when it is used, and visited pages stay cached until Refresh.
 2. **Games** lists the games that were actually played (`Game 1/2/3…`), with winner and kills. Prop markets such as "Game 5 duration" are not mistaken for games.
 3. **Lineup** shows both champion picks (by role), bans, players, source, and coverage for the selected game.
 4. **Load into DraftGap** chooses which side is allied, writes both lineups to the board, POSTs `/predict`, and switches to Draft Analysis.
@@ -749,9 +749,11 @@ Read-only endpoints (no authentication):
 
 | Route | Purpose |
 |---|---|
-| `GET /api/market/matches?limit=24&refresh=0` | LoL match list; `limit` 1–40, `refresh=1` clears the cache |
+| `GET /api/market/matches?page=1&limit=5&refresh=0` | Paginated LoL match list; `page` is 1-based, `limit` is the 1–40 page size (5 by default), `refresh=1` clears the cache |
 | `GET /api/market/match?slug=lol-tes-blg-2026-10-28` | match detail, teams, and played games |
 | `GET /api/market/lineup?slug=…&game=3` | picks, bans, source, and coverage for one game |
+
+The match response includes `pagination` with `page`, `pageSize`, `total`, `totalPages`, `hasPrevious`, and `hasNext`. `total` and `totalPages` are `null` while more pages remain; the server resolves the end as pages are fetched. The dialog requests page 1 when it opens and fetches later pages only when Previous or Next is used.
 
 Example (Top Esports vs Bilibili Gaming, Game 3):
 

@@ -152,11 +152,23 @@ step "Launch browser and mock market endpoints"
 ab close >/dev/null 2>&1 || true
 ab open >/dev/null
 ab set viewport 1440 1000 >/dev/null
+ab network route '**/api/market/matches*page=2*' --body "$(cat "$ROOT/tests/e2e/fixtures/matches-page-2.json")" >/dev/null
 ab network route '**/api/market/matches*' --body "$(cat "$ROOT/tests/e2e/fixtures/matches.json")" >/dev/null
 ab network route '**/api/market/match?slug=*' --body "$(cat "$ROOT/tests/e2e/fixtures/match.json")" >/dev/null
 ab network route '**/api/market/lineup?slug=*&game=3*' --body "$(cat "$ROOT/tests/e2e/fixtures/lineup-3.json")" >/dev/null
 ab network route '**/api/market/lineup?slug=*&game=1*' --body "$(cat "$ROOT/tests/e2e/fixtures/lineup-1.json")" >/dev/null
 ab navigate "$BASE_URL/" >/dev/null
+ab eval --stdin >/dev/null <<'JS'
+(() => {
+  window.__marketFetches = [];
+  const original = window.fetch;
+  window.fetch = (...args) => {
+    window.__marketFetches.push(String(args[0]));
+    return original(...args);
+  };
+  return true;
+})()
+JS
 
 step "Open the market dialog and inspect the match list"
 ab wait '#market-open' --timeout 15000 >/dev/null
@@ -168,6 +180,7 @@ fi
 ab click '#market-open' >/dev/null
 ab wait '#market-dialog[open]' --timeout 10000 >/dev/null
 ab wait '[data-pm-match]' --timeout 15000 >/dev/null
+ab wait '#pm-pager:not([hidden])' --timeout 15000 >/dev/null
 page_assert "page markup uses only market wording" <<'JS'
 (() => {
   const markup = document.documentElement.innerHTML.toLowerCase();
@@ -175,18 +188,95 @@ page_assert "page markup uses only market wording" <<'JS'
   return 'wording-ok';
 })()
 JS
-page_assert "match list shows Top Esports vs Bilibili Gaming" <<'JS'
+page_assert "page 1 shows five matches in reverse time order" <<'JS'
 (() => {
   const matches = [...document.querySelectorAll('[data-pm-match]')];
-  if (matches.length !== 1) throw new Error(`expected 1 match, got ${matches.length}`);
+  if (matches.length !== 5) throw new Error(`expected 5 matches on page 1, got ${matches.length}`);
   if (!matches[0].innerText.includes('Top Esports vs Bilibili Gaming')) {
-    throw new Error(`unexpected match: ${matches[0].innerText}`);
+    throw new Error(`unexpected first match: ${matches[0].innerText}`);
+  }
+  const times = matches.map((match) => Date.parse(match.querySelector('time')?.dateTime || ''));
+  if (times.some((time, index) => index > 0 && time > times[index - 1])) {
+    throw new Error(`page 1 is not newest-first: ${times.join(', ')}`);
+  }
+  const pager = document.querySelector('#pm-pager');
+  const lines = (pager?.innerText || '').split('\n').map((line) => line.trim());
+  if (!pager || pager.hidden || !lines.includes('Page 1') || lines.includes('Page 1 of 2')) {
+    throw new Error(`unexpected pager: ${pager?.innerText}`);
+  }
+  const panelRect = document.querySelector('.pm-matches-panel').getBoundingClientRect();
+  const listRect = document.querySelector('#pm-matches').getBoundingClientRect();
+  const pagerRect = pager.getBoundingClientRect();
+  const bottomGap = panelRect.bottom - pagerRect.bottom;
+  if (pagerRect.top < listRect.bottom - 1 || bottomGap < 0 || bottomGap > 24) {
+    throw new Error(`pager is not anchored to the panel bottom: gap ${bottomGap}`);
+  }
+  const status = document.querySelector('#pm-list-status')?.innerText || '';
+  if (!status.includes('More matches are available')) {
+    throw new Error(`missing lazy-load status: ${status}`);
+  }
+  return matches.length;
+})()
+JS
+page_assert "page 2 is not fetched before it is used" <<'JS'
+(() => {
+  const requests = (window.__marketFetches || []).filter((url) => url.includes('/api/market/matches'));
+  if (requests.length !== 1) throw new Error(`expected one match-list request, got ${requests.length}`);
+  if (requests.some((url) => url.includes('page=2'))) throw new Error('page 2 loaded eagerly');
+  return 'lazy-ok';
+})()
+JS
+
+step "Load page 2 on demand and return through the cached page"
+ab click '[data-pm-page="2"]' >/dev/null
+ab wait '#pm-pager' --timeout 15000 >/dev/null
+ab wait --fn 'document.querySelector("#pm-pager")?.innerText.includes("Page 2 of 2")' --timeout 15000 >/dev/null
+page_assert "page 2 has one match and a working pager" <<'JS'
+(() => {
+  const matches = [...document.querySelectorAll('[data-pm-match]')];
+  if (matches.length !== 1) throw new Error(`expected 1 match on page 2, got ${matches.length}`);
+  if (!matches[0].innerText.includes('LOS vs Team Secret Whales')) {
+    throw new Error(`unexpected page 2 match: ${matches[0].innerText}`);
+  }
+  const pager = document.querySelector('#pm-pager');
+  if (!pager.innerText.includes('Page 2 of 2')) throw new Error(`unexpected pager: ${pager.innerText}`);
+  const page2 = (window.__marketFetches || []).filter((url) => url.includes('/api/market/matches') && url.includes('page=2'));
+  if (page2.length !== 1) throw new Error(`expected one page 2 request, got ${page2.length}`);
+  return matches.length;
+})()
+JS
+ab click '[data-pm-page="1"]' >/dev/null
+ab wait --fn 'document.querySelector("#pm-pager")?.innerText.includes("Page 1")' --timeout 15000 >/dev/null
+page_assert "page 1 is restored from cache" <<'JS'
+(() => {
+  const matches = [...document.querySelectorAll('[data-pm-match]')];
+  if (matches.length !== 5) throw new Error(`expected 5 matches on page 1, got ${matches.length}`);
+  if (!matches[0].innerText.includes('Top Esports vs Bilibili Gaming')) {
+    throw new Error(`unexpected first match: ${matches[0].innerText}`);
+  }
+  const page1 = (window.__marketFetches || []).filter((url) => url.includes('/api/market/matches') && url.includes('page=1'));
+  if (page1.length !== 1) throw new Error(`expected one page 1 request, got ${page1.length}`);
+  const pager = document.querySelector('#pm-pager');
+  if (!pager?.innerText.includes('Page 1 of 2')) {
+    throw new Error(`known total was not retained: ${pager?.innerText}`);
   }
   return matches.length;
 })()
 JS
 
-step "Inspect the game list"
+page_assert "match details stay unloaded until a match is selected" <<'JS'
+(() => {
+  const detail = document.querySelector('#pm-detail')?.innerText || '';
+  if (!detail.includes('Choose a match')) throw new Error(`unexpected detail pane: ${detail}`);
+  const requests = (window.__marketFetches || []).filter((url) => url.includes('/api/market/match?'));
+  if (requests.length) throw new Error(`match details loaded eagerly: ${requests.join(', ')}`);
+  return 'detail-lazy-ok';
+})()
+JS
+
+step "Select Top Esports and inspect the game list"
+ab click '[data-pm-match="lol-tes-blg-2026-10-28"]' >/dev/null
+ab wait '#pm-games [data-pm-game]' --timeout 20000 >/dev/null
 ab wait '[data-pm-game]' --timeout 15000 >/dev/null
 page_assert "three played games are listed" <<'JS'
 (() => {

@@ -121,8 +121,8 @@ python3 draftgap_model.py --serve
 
 点击顶部 **Market**：
 
-1. 左侧 **Matches** 列出进行中、即将开始和最近结束的 LoL 比赛。
-2. 选择比赛后，右侧列出实际开打的 **Game 1/2/3…**。
+1. 左侧 **Matches** 按开始时间倒序每页列出 5 场比赛，Previous / Page / Next 分页栏固定在面板底部；只有打开某一页时才请求该页。
+2. 选择比赛后，右侧只列出实际开打的 **Game 1/2/3…**。例如 BO5 以 0–3 结束时不会列出 Game 4；“Game 5 时长”之类的道具盘口也不会被误当成比赛。
 3. 点击某一局，显示双方英雄、选手、位置、禁用、数据来源和覆盖率。
 
 本示例使用 Top Esports vs Bilibili Gaming 的第 3 局：Top Esports 赢下了这一局，模型给这套获胜阵容 **57.79%** 的胜率。
@@ -740,7 +740,7 @@ python3 draftgap_model.py --serve --refresh-interval 0       # 等价于关闭�
 
 页面顶部 **Market** 打开原生对话框：
 
-1. **Matches**：列出 market LoL 系列中的比赛（进行中 / 即将开始 / 最近结束），显示赛事、比分和开始时间。
+1. **Matches**：按开始时间倒序每页列出 5 场比赛，显示赛事、比分和开始时间。分页栏固定在面板底部，点击 **Previous** / **Next** 时才加载对应页；已访问的页会缓存到下次 Refresh。
 2. **Games**：选中比赛后列出实际开打的 `Game 1/2/3…`，附带胜负与击杀数；不会把“Game 5 时长”之类的道具盘口误当成比赛。
 3. **Lineup**：选中某场后显示双方英雄（按位置）、禁用、选手、数据来源和覆盖率。
 4. **Load into DraftGap**：选择哪一方作为己方后，一键写入棋盘、POST `/predict`，并切换到 Draft Analysis。
@@ -749,9 +749,11 @@ python3 draftgap_model.py --serve --refresh-interval 0       # 等价于关闭�
 
 | 路由 | 用途 |
 |---|---|
-| `GET /api/market/matches?limit=24&refresh=0` | LoL 比赛列表；`limit` 1–40，`refresh=1` 清缓存 |
+| `GET /api/market/matches?page=1&limit=5&refresh=0` | LoL 比赛分页列表；`page` 从 1 开始，`limit` 为每页 1–40 条（默认 5），`refresh=1` 清缓存 |
 | `GET /api/market/match?slug=lol-tes-blg-2026-10-28` | 比赛详情、队伍、实际 Game 列表 |
 | `GET /api/market/lineup?slug=…&game=3` | 指定 Game 的双方阵容、禁用、来源和覆盖率 |
+
+比赛列表响应包含 `pagination`：`page`、`pageSize`、`total`、`totalPages`、`hasPrevious`、`hasNext`。还有后续页时 `total` 和 `totalPages` 为 `null`，服务端会随分页请求逐步确定末尾。对话框打开时只请求第 1 页，点击 Previous / Next 时才请求其他页。
 
 示例（Top Esports vs Bilibili Gaming 第 3 局）：
 
