@@ -10,7 +10,6 @@
 - **LoL market 阵容导入**：顶部 **Market** 按钮列出 LoL 比赛，展开 Game 1/2/3…，选中后展示双方英雄与禁用，并可一键载入棋盘预测。
 - **实时数据**：启动时及每 5 分钟按 ETag/Last-Modified 检查上游数据集，变化时热替换模型；也可点页面上的 Sync 按钮或 `POST /api/refresh` 手动检查。
 - **实时集成**：外部 API 拿到双方阵容后，进程内调用约 **2 ms**（5v5，不含建议）；带完整候选表约 **27–40 ms**。
-- **浏览器 E2E**：使用 [agent-browser](https://github.com/vercel-labs/agent-browser) 验证 market 列表 → Game 列表 → 阵容 → 载入 DraftGap 的完整流程。
 
 ![DraftGap 主界面](docs/images/01-draft-board.png)
 
@@ -78,11 +77,35 @@ python3 draftgap_model.py --download                # 只下载缺失数据集
 python3 draftgap_model.py --refresh --draft examples/draft.json   # 强制刷新数据
 python3 validate_fidelity.py                        # 与页面抓取值逐项比对
 python3 -m unittest discover -s tests -v            # Python 行为测试
-npm install && npx agent-browser install            # 首次：安装 E2E 工具和浏览器
-npm run test:e2e                                    # 浏览器端到端测试
 ```
 
-### 1.1 图文使用手册
+### 1.1 Docker 启动
+
+构建镜像：
+
+```bash
+docker build -t draftgap-rea .
+```
+
+使用持久化数据卷启动：
+
+```bash
+docker volume create draftgap-data
+docker run --rm -p 8765:8765 -v draftgap-data:/app/data draftgap-rea
+```
+
+打开 <http://127.0.0.1:8765/>。容器监听 `0.0.0.0`，端口映射可以直接访问。
+
+如果容器需要代理出网，在启动命令后追加 `--proxy`：
+
+```bash
+docker run --rm -p 8765:8765 -v draftgap-data:/app/data draftgap-rea \
+  --proxy=http://host.docker.internal:7891
+```
+
+Linux 上如果不能解析 `host.docker.internal`，加 `--add-host=host.docker.internal:host-gateway`，并让代理监听 Docker 网桥可达的地址（不要只监听 `127.0.0.1`）。该代理用于数据集刷新和 market 请求；命名卷会保留已下载的数据集。
+
+### 1.2 图文使用手册
 
 #### 1. 启动页面
 
@@ -798,45 +821,9 @@ market 路由的错误码：
 | 502 | `upstream_http_error` / `upstream_unreachable` | market/Leaguepedia 返回错误或无法连接；`upstream_unreachable` 会带代理提示 |
 | 502 | `invalid_upstream_response` / `upstream_too_large` | 上游响应损坏或超过大小上限 |
 
-**当前验证范围**：BLG vs Gen.G 决赛（`lol-blg-gen-2026-11-14`）的 4 局归档阵容已通过浏览器端到端验证，10/10 英雄可被模型解析并载入预测。WebSocket live 路径已用当时正在进行的 CS2 系列验证传输、订阅和 snapshot 解析；截至 2026-11-16，market LoL 分类没有进行中的比赛，因此 **LoL live draft 的真实数据路径仍未验证**。公共 HTTP series-state 在测试的已结束系列上只返回摘要；需要登录的 seed 接口未使用。
+**当前验证范围**：BLG vs Gen.G 决赛（`lol-blg-gen-2026-11-14`）的 4 局归档阵容已在浏览器中验证，10/10 英雄可被模型解析并载入预测。WebSocket live 路径已用当时正在进行的 CS2 系列验证传输、订阅和 snapshot 解析；截至 2026-11-16，market LoL 分类没有进行中的比赛，因此 **LoL live draft 的真实数据路径仍未验证**。公共 HTTP series-state 在测试的已结束系列上只返回摘要；需要登录的 seed 接口未使用。
 
-### 7.5 浏览器 E2E（agent-browser）
-
-仓库使用 [agent-browser](https://github.com/vercel-labs/agent-browser) 做端到端测试。测试启动真实本地服务（包括 `POST /predict`），只 mock 三个 market 端点，因此不依赖上游在线或某场比赛仍在列表里。
-
-```bash
-npm install
-npx agent-browser install   # 首次运行，下载 Chrome for Testing
-python3 draftgap_model.py --download   # data/ 为空时
-npm run test:e2e
-```
-
-本 E2E harness 要求 Node.js 22+。agent-browser 当前声明需要 Node.js 24+；本仓库在 Node.js 22.18 上使用 0.41.2 完整跑通。
-
-测试文件：
-
-- `tests/e2e/run.sh`：启动服务、注册 mock、驱动浏览器并断言结果。
-- `tests/e2e/fixtures/`：从真实 BLG vs Gen.G 响应截取的稳定 fixture。
-- `tests/e2e/artifacts/`：失败排查用的服务日志（已被 gitignore）。
-
-覆盖流程：
-
-1. 打开 **Market** 对话框；
-2. 断言比赛列表；
-3. 断言 4 个实际 Game；
-4. 断言 Game 4 的 10 个英雄和 Leaguepedia 来源；
-5. 切换到 Game 1 并断言阵容更新；
-6. 选择己方并载入，断言 Draft Analysis 同时出现双方英雄和胜率；
-7. 断言页面无 JavaScript 错误。
-
-截图（由 `npm run screenshots` 使用同一套 E2E fixture 生成）：
-
-```bash
-npm run screenshots
-# docs/images/01-draft-board.png
-# docs/images/02-market-lineup.png
-# docs/images/03-analysis.png
-```
+---
 
 ## 8. 性能与资源
 
@@ -884,8 +871,6 @@ npm run screenshots
 ## 11. 鸣谢
 
 - [DraftGap](https://draftgap.com/)：原始页面、模型行为和公开数据集，使这个独立复现成为可能。
-- [agent-browser](https://github.com/vercel-labs/agent-browser)：E2E 测试和 README 截图所使用的浏览器自动化工具。
-- [Polymarket](https://polymarket.com/)：为 market 阵容导入提供公开的电竞赛事、Game 和 draft 数据。
 
 本项目与上述项目均无隶属或背书关系。
 
@@ -910,8 +895,8 @@ draftgap-rea/
 ├── README.md                # English README
 ├── README.zh-CN.md          # 简体中文 README
 ├── LICENSE                  # GNU General Public License v3.0
-├── package.json             # agent-browser E2E 开发依赖与脚本
-├── package-lock.json
+├── Dockerfile               # 容器镜像
+├── .dockerignore
 ├── .gitignore
 ├── data/
 │   ├── README.md
@@ -919,7 +904,7 @@ draftgap-rea/
 │   ├── 30-days.json         # 自动下载；已 gitignore
 │   └── remote-meta.json     # ETag/Last-Modified 校验元数据；已 gitignore
 ├── docs/
-│   └── images/              # README 图文手册截图；由 npm run screenshots 生成
+│   └── images/              # README 图文手册截图
 ├── web/
 │   ├── index.html           # 1:1 DraftGap 页面骨架
 │   ├── assets/
@@ -934,9 +919,5 @@ draftgap-rea/
 └── tests/
     ├── test_model.py        # 12 个模型行为测试
     ├── test_market.py       # 5 个 market/Leaguepedia 解析与来源测试
-    ├── test_server.py       # 10 个 HTTP 契约测试（含页面/资产/bootstrap/CORS/market 参数）
-    └── e2e/
-        ├── run.sh           # agent-browser 端到端测试
-        ├── fixtures/        # 稳定的 market API fixture
-        └── artifacts/       # 运行日志；已 gitignore
+    └── test_server.py       # 10 个 HTTP 契约测试（含页面/资产/bootstrap/CORS/market 参数）
 ```

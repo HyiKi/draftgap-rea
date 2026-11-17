@@ -10,7 +10,6 @@ An independent, local-only reproduction of the draft winrate model behind [draft
 - **LoL market lineup import**: the **Market** button lists LoL matches, expands the played games (`Game 1/2/3…`), shows both lineups and bans, and loads a lineup into DraftGap with one click.
 - **Live data**: the service checks the upstream dataset at startup and every five minutes using `ETag`/`Last-Modified`, then hot-swaps the model. The Sync button and `POST /api/refresh` trigger the same check manually.
 - **Real-time integration**: an in-process 5v5 call takes about **2 ms** without suggestions and **27–40 ms** with complete suggestion tables.
-- **Browser E2E**: [agent-browser](https://github.com/vercel-labs/agent-browser) verifies the market list → games → lineup → DraftGap flow.
 
 ![DraftGap home page](docs/images/01-draft-board.png)
 
@@ -78,11 +77,35 @@ python3 draftgap_model.py --download                # download only missing data
 python3 draftgap_model.py --refresh --draft examples/draft.json   # force a dataset refresh
 python3 validate_fidelity.py                        # compare against captured page values
 python3 -m unittest discover -s tests -v            # Python behavior tests
-npm install && npx agent-browser install            # first time: E2E CLI + browser
-npm run test:e2e                                    # browser end-to-end test
 ```
 
-### 1.1 Illustrated web UI walkthrough
+### 1.1 Docker
+
+Build the image:
+
+```bash
+docker build -t draftgap-rea .
+```
+
+Run it with a persistent data volume:
+
+```bash
+docker volume create draftgap-data
+docker run --rm -p 8765:8765 -v draftgap-data:/app/data draftgap-rea
+```
+
+Open <http://127.0.0.1:8765/>. The container listens on `0.0.0.0` so the published port works.
+
+If outbound access needs a proxy, append `--proxy` to the container command:
+
+```bash
+docker run --rm -p 8765:8765 -v draftgap-data:/app/data draftgap-rea \
+  --proxy=http://host.docker.internal:7891
+```
+
+On Linux, add `--add-host=host.docker.internal:host-gateway` if that hostname is not resolvable, and make the proxy listen on an address reachable from the Docker bridge (not only `127.0.0.1`). The proxy is used for dataset refresh and market requests. The named volume keeps the downloaded datasets between runs.
+
+### 1.2 Illustrated web UI walkthrough
 
 #### 1. Start the page
 
@@ -798,45 +821,7 @@ Market endpoint errors:
 | 502 | `upstream_http_error` / `upstream_unreachable` | market/Leaguepedia error or unreachable; `upstream_unreachable` includes a proxy hint |
 | 502 | `invalid_upstream_response` / `upstream_too_large` | malformed upstream response or size limit exceeded |
 
-**Verification scope**: the four archived games of the BLG vs Gen.G final (`lol-blg-gen-2026-11-14`) passed browser end-to-end verification, and all 10 champions resolve and load into a prediction. The live WebSocket path has been verified for transport, subscription, and snapshot parsing against a CS2 series that was live at the time. As of 2026-11-16 there were no live matches in the LoL market category, so **the real-data LoL live draft path remains unverified**. The public HTTP series-state endpoint returned only summaries for the finished series tested; the login-gated seed endpoint was not used.
-
-### 7.5 Browser E2E with agent-browser
-
-The repository uses [agent-browser](https://github.com/vercel-labs/agent-browser) for end-to-end testing. The test starts a real local service (including `POST /predict`) and mocks only the three market endpoints, so it is independent of upstream availability and of whether a particular match is still listed.
-
-```bash
-npm install
-npx agent-browser install   # first run only; downloads Chrome for Testing
-python3 draftgap_model.py --download   # if data/ is empty
-npm run test:e2e
-```
-
-Node.js 22+ is required by this harness. agent-browser currently declares Node.js 24+; version 0.41.2 with Node.js 22.18 completed the suite successfully here.
-
-Files:
-
-- `tests/e2e/run.sh` starts the server, registers mocks, drives the browser, and asserts the result.
-- `tests/e2e/fixtures/` contains stable fixtures captured from real BLG vs Gen.G responses.
-- `tests/e2e/artifacts/` holds server logs for debugging and is gitignored.
-
-Coverage:
-
-1. open the **Market** dialog;
-2. assert the match list;
-3. assert all four played games;
-4. assert the Game 4 lineup and Leaguepedia source;
-5. switch to Game 1 and assert the lineup changes;
-6. choose allies, load the game, and assert Draft Analysis shows both teams and a winrate;
-7. assert there are no JavaScript page errors.
-
-Screenshots (generated from the same E2E fixtures):
-
-```bash
-npm run screenshots
-# docs/images/01-draft-board.png
-# docs/images/02-market-lineup.png
-# docs/images/03-analysis.png
-```
+**Verification scope**: the four archived games of the BLG vs Gen.G final (`lol-blg-gen-2026-11-14`) were verified in a browser, and all 10 champions resolve and load into a prediction. The live WebSocket path has been verified for transport, subscription, and snapshot parsing against a CS2 series that was live at the time. As of 2026-11-16 there were no live matches in the LoL market category, so **the real-data LoL live draft path remains unverified**. The public HTTP series-state endpoint returned only summaries for the finished series tested; the login-gated seed endpoint was not used.
 
 ---
 
@@ -886,8 +871,6 @@ Peak memory is dominated by the roughly 1.35 million matchup/synergy entries in 
 ## 11. Acknowledgements
 
 - [DraftGap](https://draftgap.com/) for the original page, model behavior, and public datasets that made this independent reproduction possible.
-- [agent-browser](https://github.com/vercel-labs/agent-browser) for the browser automation behind the E2E suite and README screenshots.
-- [Polymarket](https://polymarket.com/) for publishing the esports match, game, and draft data used by the market lineup importer.
 
 This project is independent and is not endorsed by or affiliated with any of them.
 
@@ -912,8 +895,8 @@ draftgap-rea/
 ├── README.md                # English README
 ├── README.zh-CN.md          # Simplified Chinese README
 ├── LICENSE                  # GNU General Public License v3.0
-├── package.json             # agent-browser E2E dev dependency and scripts
-├── package-lock.json
+├── Dockerfile               # container image
+├── .dockerignore
 ├── .gitignore
 ├── data/
 │   ├── README.md
@@ -921,7 +904,7 @@ draftgap-rea/
 │   ├── 30-days.json         # auto-downloaded; gitignored
 │   └── remote-meta.json     # ETag/Last-Modified validation metadata; gitignored
 ├── docs/
-│   └── images/              # README screenshots; generated by npm run screenshots
+│   └── images/              # README screenshots
 ├── web/
 │   ├── index.html           # 1:1 DraftGap page shell
 │   ├── assets/
@@ -936,9 +919,5 @@ draftgap-rea/
 └── tests/
     ├── test_model.py        # 12 model behavior tests
     ├── test_market.py       # 5 market/Leaguepedia parsing and provenance tests
-    ├── test_server.py       # 10 HTTP contract tests (page/assets/bootstrap/CORS/market params)
-    └── e2e/
-        ├── run.sh           # agent-browser end-to-end test
-        ├── fixtures/        # stable market API fixtures
-        └── artifacts/       # run logs; gitignored
+    └── test_server.py       # 10 HTTP contract tests (page/assets/bootstrap/CORS/market params)
 ```

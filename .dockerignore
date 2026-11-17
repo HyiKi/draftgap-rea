@@ -1,0 +1,14 @@
+.git
+.gitignore
+.DS_Store
+__pycache__/
+*.py[cod]
+data/*.json
+data/*.part
+node_modules/
+tests/
+docs/
+package.json
+package-lock.json
+README.md
+README.zh-CN.md

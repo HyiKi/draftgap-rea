@@ -201,16 +201,19 @@ page_assert "Game 1 lineup replaces Game 4" <<'JS'
 })()
 JS
 
-step "Load Game 1 into the DraftGap board"
+step "Return to Game 4 and load it into the DraftGap board"
+ab click '[data-pm-game="4"]' >/dev/null
+ab wait '[data-pm-game="4"][aria-pressed="true"]' --timeout 5000 >/dev/null
+ab wait --text 'Gwen' --timeout 15000 >/dev/null
 ab click '[data-pm-ally="home"]' >/dev/null
 ab click '#pm-load' >/dev/null
 ab wait '#market-dialog:not([open])' --timeout 20000 >/dev/null
 ab wait '#tab-analysis:not([hidden])' --timeout 20000 >/dev/null
 ab wait --text 'DRAFT ANALYSIS' --timeout 20000 >/dev/null
-page_assert "analysis contains both teams and a winrate" <<'JS'
+page_assert "analysis matches the Game 4 lineup" <<'JS'
 (() => {
   const text = document.body.innerText;
-  for (const expected of ['DRAFT ANALYSIS', "K'SANTE", 'OLAF', 'RENATA GLASC', 'NAMI']) {
+  for (const expected of ['DRAFT ANALYSIS', 'GWEN', 'NOCTURNE', 'AURORA', 'LULU']) {
     if (!text.includes(expected)) throw new Error(`missing analysis text: ${expected}`);
   }
   if (!/WINRATE\s+\d+\.\d+/.test(text)) throw new Error('winrate was not rendered');
