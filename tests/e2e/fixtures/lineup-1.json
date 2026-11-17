@@ -1,70 +1,70 @@
 {
   "home": {
-    "name": "Bilibili Gaming",
-    "score": 3,
+    "name": "Top Esports",
+    "score": 2,
     "gameKills": null,
     "won": false,
     "picks": [
       {
-        "champion": "K'Sante",
-        "championKey": "897",
-        "championId": "KSante",
-        "name": "K'Sante",
-        "nameZh": "纳祖芒荣耀",
+        "champion": "Jayce",
+        "championKey": "126",
+        "championId": "Jayce",
+        "name": "Jayce",
+        "nameZh": "未来守护者",
         "role": 0,
         "roleName": "Top",
-        "player": "Bin (Chen Ze-Bin)",
+        "player": "369",
         "resolved": true
       },
       {
-        "champion": "Jarvan IV",
-        "championKey": "59",
-        "championId": "JarvanIV",
-        "name": "Jarvan IV",
-        "nameZh": "德玛西亚皇子",
+        "champion": "Qiyana",
+        "championKey": "246",
+        "championId": "Qiyana",
+        "name": "Qiyana",
+        "nameZh": "元素女皇",
         "role": 1,
         "roleName": "Jungle",
-        "player": "Xun",
+        "player": "Tian",
         "resolved": true
       },
       {
-        "champion": "Locke",
-        "championKey": "805",
-        "championId": "Locke",
-        "name": "Locke",
-        "nameZh": "灰烬驱魔人",
+        "champion": "Viktor",
+        "championKey": "112",
+        "championId": "Viktor",
+        "name": "Viktor",
+        "nameZh": "奥术先驱",
         "role": 2,
         "roleName": "Middle",
-        "player": "Knight (Zhuo Ding)",
+        "player": "Creme",
         "resolved": true
       },
       {
-        "champion": "Kalista",
-        "championKey": "429",
-        "championId": "Kalista",
-        "name": "Kalista",
-        "nameZh": "复仇之矛",
+        "champion": "Jhin",
+        "championKey": "202",
+        "championId": "Jhin",
+        "name": "Jhin",
+        "nameZh": "戏命师",
         "role": 3,
         "roleName": "Bottom",
-        "player": "Viper (Park Do-hyeon)",
+        "player": "JackeyLove",
         "resolved": true
       },
       {
-        "champion": "Renata Glasc",
-        "championKey": "888",
-        "championId": "Renata",
-        "name": "Renata Glasc",
-        "nameZh": "炼金男爵",
+        "champion": "Alistar",
+        "championKey": "12",
+        "championId": "Alistar",
+        "name": "Alistar",
+        "nameZh": "牛头酋长",
         "role": 4,
         "roleName": "Support",
-        "player": "ON",
+        "player": "Zhuo",
         "resolved": true
       }
     ],
     "bans": [
       {
-        "champion": "Qiyana",
-        "name": "Qiyana",
+        "champion": "Olaf",
+        "name": "Olaf",
         "resolved": true
       },
       {
@@ -73,109 +73,109 @@
         "resolved": true
       },
       {
-        "champion": "Lulu",
-        "name": "Lulu",
+        "champion": "Ambessa",
+        "name": "Ambessa",
         "resolved": true
       },
       {
-        "champion": "Ezreal",
-        "name": "Ezreal",
+        "champion": "Kai'Sa",
+        "name": "Kai'Sa",
         "resolved": true
       },
       {
-        "champion": "Seraphine",
-        "name": "Seraphine",
+        "champion": "K'Sante",
+        "name": "K'Sante",
         "resolved": true
       }
     ],
     "roleSource": "leaguepedia-pick-order"
   },
   "away": {
-    "name": "Gen.G",
+    "name": "Bilibili Gaming",
     "score": 1,
     "gameKills": null,
     "won": true,
     "picks": [
       {
-        "champion": "Olaf",
-        "championKey": "2",
-        "championId": "Olaf",
-        "name": "Olaf",
-        "nameZh": "狂战士",
+        "champion": "Gnar",
+        "championKey": "150",
+        "championId": "Gnar",
+        "name": "Gnar",
+        "nameZh": "迷失之牙",
         "role": 0,
         "roleName": "Top",
-        "player": "Kiin",
+        "player": "Bin (Chen Ze-Bin)",
         "resolved": true
       },
       {
-        "champion": "Lee Sin",
-        "championKey": "64",
-        "championId": "LeeSin",
-        "name": "Lee Sin",
-        "nameZh": "盲僧",
+        "champion": "Vi",
+        "championKey": "254",
+        "championId": "Vi",
+        "name": "Vi",
+        "nameZh": "皮城执法官",
         "role": 1,
         "roleName": "Jungle",
-        "player": "Canyon",
+        "player": "Xun",
         "resolved": true
       },
       {
-        "champion": "Syndra",
-        "championKey": "134",
-        "championId": "Syndra",
-        "name": "Syndra",
-        "nameZh": "暗黑元首",
+        "champion": "Orianna",
+        "championKey": "61",
+        "championId": "Orianna",
+        "name": "Orianna",
+        "nameZh": "发条魔灵",
         "role": 2,
         "roleName": "Middle",
-        "player": "Chovy",
+        "player": "Knight (Zhuo Ding)",
         "resolved": true
       },
       {
-        "champion": "Corki",
-        "championKey": "42",
-        "championId": "Corki",
-        "name": "Corki",
-        "nameZh": "英勇投弹手",
+        "champion": "Ezreal",
+        "championKey": "81",
+        "championId": "Ezreal",
+        "name": "Ezreal",
+        "nameZh": "探险家",
         "role": 3,
         "roleName": "Bottom",
-        "player": "Ruler",
+        "player": "Viper (Park Do-hyeon)",
         "resolved": true
       },
       {
-        "champion": "Nami",
-        "championKey": "267",
-        "championId": "Nami",
-        "name": "Nami",
-        "nameZh": "唤潮鲛姬",
+        "champion": "Nautilus",
+        "championKey": "111",
+        "championId": "Nautilus",
+        "name": "Nautilus",
+        "nameZh": "深海泰坦",
         "role": 4,
         "roleName": "Support",
-        "player": "Duro",
+        "player": "ON",
         "resolved": true
       }
     ],
     "bans": [
+      {
+        "champion": "Akali",
+        "name": "Akali",
+        "resolved": true
+      },
+      {
+        "champion": "Renata Glasc",
+        "name": "Renata Glasc",
+        "resolved": true
+      },
       {
         "champion": "Nocturne",
         "name": "Nocturne",
         "resolved": true
       },
       {
-        "champion": "Orianna",
-        "name": "Orianna",
+        "champion": "Locke",
+        "name": "Locke",
         "resolved": true
       },
       {
-        "champion": "Vi",
-        "name": "Vi",
-        "resolved": true
-      },
-      {
-        "champion": "Jax",
-        "name": "Jax",
-        "resolved": true
-      },
-      {
-        "champion": "Camille",
-        "name": "Camille",
+        "champion": "Rumble",
+        "name": "Rumble",
         "resolved": true
       }
     ],
@@ -186,23 +186,23 @@
     "label": "Leaguepedia archive",
     "url": "https://lol.fandom.com/wiki/2026_Season_World_Championship/Main_Event",
     "note": "The market no longer serves this finished game's draft; picks come from Leaguepedia's public scoreboard archive and are ordered by role.",
-    "matchId": "2026 Season World Championship/Main Event_Finals_1",
-    "fetchedAt": "2026-11-16T11:51:28.084129Z",
+    "matchId": "2026 Season World Championship/Main Event_Round 4_4",
+    "fetchedAt": "2026-11-17T04:53:26.236651Z",
     "winnerSide": "away"
   },
   "warnings": [],
   "ok": true,
-  "slug": "lol-blg-gen-2026-11-14",
-  "eventUrl": "https://polymarket.com/event/lol-blg-gen-2026-11-14",
-  "title": "LoL: Bilibili Gaming vs Gen.G (BO5) - Worlds Playoffs",
-  "competition": "Worlds Playoffs",
-  "startTime": "2026-11-14T19:40:00Z",
+  "slug": "lol-tes-blg-2026-10-28",
+  "eventUrl": "https://polymarket.com/event/lol-tes-blg-2026-10-28",
+  "title": "LoL: Top Esports vs Bilibili Gaming (BO3) - Worlds Group Stage",
+  "competition": "Worlds Group Stage",
+  "startTime": "2026-10-29T22:30:00Z",
   "game": 1,
   "gameLabel": "Game 1",
   "status": "finished",
   "winnerSide": "away",
-  "matchScore": "3-1",
-  "bestOf": 5,
+  "matchScore": "2-1",
+  "bestOf": 3,
   "coverage": {
     "picks": 10,
     "resolved": 10,

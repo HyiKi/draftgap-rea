@@ -1,27 +1,27 @@
 {
   "ok": true,
-  "fetchedAt": "2026-11-16T11:51:27.620791Z",
-  "slug": "lol-blg-gen-2026-11-14",
-  "eventId": "1345375",
-  "url": "https://polymarket.com/event/lol-blg-gen-2026-11-14",
-  "title": "LoL: Bilibili Gaming vs Gen.G (BO5) - Worlds Playoffs",
-  "competition": "Worlds Playoffs",
-  "startTime": "2026-11-14T19:40:00Z",
-  "endTime": "2026-11-15T01:40:00Z",
+  "fetchedAt": "2026-11-17T04:53:26.222159Z",
+  "slug": "lol-tes-blg-2026-10-28",
+  "eventId": "1262495",
+  "url": "https://polymarket.com/event/lol-tes-blg-2026-10-28",
+  "title": "LoL: Top Esports vs Bilibili Gaming (BO3) - Worlds Group Stage",
+  "competition": "Worlds Group Stage",
+  "startTime": "2026-10-29T22:30:00Z",
+  "endTime": "2026-10-30T04:30:00Z",
   "state": "finished",
-  "score": "3-1",
-  "period": "4/5",
-  "bestOf": 5,
+  "score": "2-1",
+  "period": "3/3",
+  "bestOf": 3,
   "home": {
+    "id": "146191",
+    "name": "Top Esports",
+    "abbreviation": "tes",
+    "score": 2
+  },
+  "away": {
     "id": "146589",
     "name": "Bilibili Gaming",
     "abbreviation": "blg",
-    "score": 3
-  },
-  "away": {
-    "id": "146465",
-    "name": "Gen.G",
-    "abbreviation": "gen",
     "score": 1
   },
   "games": [
@@ -30,8 +30,8 @@
       "label": "Game 1",
       "status": "finished",
       "winnerSide": "away",
-      "homeKills": 4,
-      "awayKills": 19,
+      "homeKills": 6,
+      "awayKills": 21,
       "lineupAvailable": false
     },
     {
@@ -39,8 +39,8 @@
       "label": "Game 2",
       "status": "finished",
       "winnerSide": "home",
-      "homeKills": 19,
-      "awayKills": 14,
+      "homeKills": 13,
+      "awayKills": 10,
       "lineupAvailable": false
     },
     {
@@ -48,27 +48,18 @@
       "label": "Game 3",
       "status": "finished",
       "winnerSide": "home",
-      "homeKills": 20,
-      "awayKills": 8,
-      "lineupAvailable": false
-    },
-    {
-      "number": 4,
-      "label": "Game 4",
-      "status": "finished",
-      "winnerSide": "home",
-      "homeKills": 21,
-      "awayKills": 11,
+      "homeKills": 17,
+      "awayKills": 3,
       "lineupAvailable": false
     }
   ],
-  "gridSeriesId": "3012986",
+  "gridSeriesId": "3012967",
   "notes": [
     "The market publishes live draft snapshots; finished games fall back to Leaguepedia's public scoreboard archive when the market no longer serves the draft."
   ],
   "source": {
     "provider": "Market",
     "label": "Market LoL",
-    "url": "https://polymarket.com/event/lol-blg-gen-2026-11-14"
+    "url": "https://polymarket.com/event/lol-tes-blg-2026-10-28"
   }
 }

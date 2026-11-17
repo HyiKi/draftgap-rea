@@ -125,7 +125,9 @@ Click **Market** in the header:
 2. Select a match to see the games that were actually played (`Game 1/2/3…`).
 3. Select a game to see both lineups, players, roles, bans, source, and coverage.
 
-![Market match and Game 4 lineup](docs/images/02-market-lineup.png)
+This walkthrough uses Game 3 of Top Esports vs Bilibili Gaming, a Worlds group-stage game that Top Esports won; the model rates the winning Top Esports draft at **57.79%**.
+
+![Market match and Game 3 lineup](docs/images/02-market-lineup.png)
 
 #### 3. Load it into DraftGap
 
@@ -135,7 +137,7 @@ Choose the side to treat as allies under **Load which team as allies?**, then cl
 - writes both lineups onto the board;
 - switches to **Draft Analysis**, showing the winrate, matchups, and synergy details.
 
-![Draft Analysis after loading a lineup](docs/images/03-analysis.png)
+![Draft Analysis after loading the winning Game 3 lineup](docs/images/03-analysis.png)
 
 #### 4. Quick JSON prediction
 
@@ -748,36 +750,36 @@ Read-only endpoints (no authentication):
 | Route | Purpose |
 |---|---|
 | `GET /api/market/matches?limit=24&refresh=0` | LoL match list; `limit` 1–40, `refresh=1` clears the cache |
-| `GET /api/market/match?slug=lol-blg-gen-2026-11-14` | match detail, teams, and played games |
-| `GET /api/market/lineup?slug=…&game=4` | picks, bans, source, and coverage for one game |
+| `GET /api/market/match?slug=lol-tes-blg-2026-10-28` | match detail, teams, and played games |
+| `GET /api/market/lineup?slug=…&game=3` | picks, bans, source, and coverage for one game |
 
-Example (BLG vs Gen.G final, Game 4):
+Example (Top Esports vs Bilibili Gaming, Game 3):
 
 ```bash
-curl -s 'http://127.0.0.1:8765/api/market/lineup?slug=lol-blg-gen-2026-11-14&game=4'
+curl -s 'http://127.0.0.1:8765/api/market/lineup?slug=lol-tes-blg-2026-10-28&game=3'
 ```
 
 Key fields:
 
 ```json
 {
-  "game": 4,
+  "game": 3,
   "home": {
-    "name": "Bilibili Gaming",
+    "name": "Top Esports",
     "picks": [
       {
-        "champion": "Gwen",
-        "championKey": "887",
-        "championId": "Gwen",
+        "champion": "Renekton",
+        "championKey": "58",
+        "championId": "Renekton",
         "role": 0,
-        "player": "Bin (Chen Ze-Bin)",
+        "player": "369",
         "resolved": true
       }
     ],
     "bans": [ "..." ],
     "roleSource": "leaguepedia-pick-order"
   },
-  "away": { "name": "Gen.G", "picks": [ "..." ], "bans": [ "..." ] },
+  "away": { "name": "Bilibili Gaming", "picks": [ "..." ], "bans": [ "..." ] },
   "source": {
     "kind": "leaguepedia",
     "label": "Leaguepedia archive",

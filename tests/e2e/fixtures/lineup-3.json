@@ -1,0 +1,214 @@
+{
+  "home": {
+    "name": "Top Esports",
+    "score": 2,
+    "gameKills": null,
+    "won": true,
+    "picks": [
+      {
+        "champion": "Renekton",
+        "championKey": "58",
+        "championId": "Renekton",
+        "name": "Renekton",
+        "nameZh": "荒漠屠夫",
+        "role": 0,
+        "roleName": "Top",
+        "player": "369",
+        "resolved": true
+      },
+      {
+        "champion": "Pantheon",
+        "championKey": "80",
+        "championId": "Pantheon",
+        "name": "Pantheon",
+        "nameZh": "不屈之枪",
+        "role": 1,
+        "roleName": "Jungle",
+        "player": "Tian",
+        "resolved": true
+      },
+      {
+        "champion": "Syndra",
+        "championKey": "134",
+        "championId": "Syndra",
+        "name": "Syndra",
+        "nameZh": "暗黑元首",
+        "role": 2,
+        "roleName": "Middle",
+        "player": "Creme",
+        "resolved": true
+      },
+      {
+        "champion": "Tristana",
+        "championKey": "18",
+        "championId": "Tristana",
+        "name": "Tristana",
+        "nameZh": "麦林炮手",
+        "role": 3,
+        "roleName": "Bottom",
+        "player": "JackeyLove",
+        "resolved": true
+      },
+      {
+        "champion": "Lulu",
+        "championKey": "117",
+        "championId": "Lulu",
+        "name": "Lulu",
+        "nameZh": "仙灵女巫",
+        "role": 4,
+        "roleName": "Support",
+        "player": "Zhuo",
+        "resolved": true
+      }
+    ],
+    "bans": [
+      {
+        "champion": "Olaf",
+        "name": "Olaf",
+        "resolved": true
+      },
+      {
+        "champion": "Cassiopeia",
+        "name": "Cassiopeia",
+        "resolved": true
+      },
+      {
+        "champion": "Lee Sin",
+        "name": "Lee Sin",
+        "resolved": true
+      },
+      {
+        "champion": "Ahri",
+        "name": "Ahri",
+        "resolved": true
+      },
+      {
+        "champion": "Sylas",
+        "name": "Sylas",
+        "resolved": true
+      }
+    ],
+    "roleSource": "leaguepedia-pick-order"
+  },
+  "away": {
+    "name": "Bilibili Gaming",
+    "score": 1,
+    "gameKills": null,
+    "won": false,
+    "picks": [
+      {
+        "champion": "Ambessa",
+        "championKey": "799",
+        "championId": "Ambessa",
+        "name": "Ambessa",
+        "nameZh": "铁血狼母",
+        "role": 0,
+        "roleName": "Top",
+        "player": "Bin (Chen Ze-Bin)",
+        "resolved": true
+      },
+      {
+        "champion": "Maokai",
+        "championKey": "57",
+        "championId": "Maokai",
+        "name": "Maokai",
+        "nameZh": "扭曲树精",
+        "role": 1,
+        "roleName": "Jungle",
+        "player": "Xun",
+        "resolved": true
+      },
+      {
+        "champion": "Yone",
+        "championKey": "777",
+        "championId": "Yone",
+        "name": "Yone",
+        "nameZh": "封魔剑魂",
+        "role": 2,
+        "roleName": "Middle",
+        "player": "Knight (Zhuo Ding)",
+        "resolved": true
+      },
+      {
+        "champion": "Kalista",
+        "championKey": "429",
+        "championId": "Kalista",
+        "name": "Kalista",
+        "nameZh": "复仇之矛",
+        "role": 3,
+        "roleName": "Bottom",
+        "player": "Viper (Park Do-hyeon)",
+        "resolved": true
+      },
+      {
+        "champion": "Renata Glasc",
+        "championKey": "888",
+        "championId": "Renata",
+        "name": "Renata Glasc",
+        "nameZh": "炼金男爵",
+        "role": 4,
+        "roleName": "Support",
+        "player": "ON",
+        "resolved": true
+      }
+    ],
+    "bans": [
+      {
+        "champion": "Akali",
+        "name": "Akali",
+        "resolved": true
+      },
+      {
+        "champion": "Rumble",
+        "name": "Rumble",
+        "resolved": true
+      },
+      {
+        "champion": "Nocturne",
+        "name": "Nocturne",
+        "resolved": true
+      },
+      {
+        "champion": "Yunara",
+        "name": "Yunara",
+        "resolved": true
+      },
+      {
+        "champion": "Xin Zhao",
+        "name": "Xin Zhao",
+        "resolved": true
+      }
+    ],
+    "roleSource": "leaguepedia-pick-order"
+  },
+  "source": {
+    "kind": "leaguepedia",
+    "label": "Leaguepedia archive",
+    "url": "https://lol.fandom.com/wiki/2026_Season_World_Championship/Main_Event",
+    "note": "The market no longer serves this finished game's draft; picks come from Leaguepedia's public scoreboard archive and are ordered by role.",
+    "matchId": "2026 Season World Championship/Main Event_Round 4_4",
+    "fetchedAt": "2026-11-17T04:53:26.242264Z",
+    "winnerSide": "home"
+  },
+  "warnings": [],
+  "ok": true,
+  "slug": "lol-tes-blg-2026-10-28",
+  "eventUrl": "https://polymarket.com/event/lol-tes-blg-2026-10-28",
+  "title": "LoL: Top Esports vs Bilibili Gaming (BO3) - Worlds Group Stage",
+  "competition": "Worlds Group Stage",
+  "startTime": "2026-10-29T22:30:00Z",
+  "game": 3,
+  "gameLabel": "Game 3",
+  "status": "finished",
+  "winnerSide": "home",
+  "matchScore": "2-1",
+  "bestOf": 3,
+  "coverage": {
+    "picks": 10,
+    "resolved": 10,
+    "unresolved": 0,
+    "homePicks": 5,
+    "awayPicks": 5,
+    "complete": true
+  }
+}

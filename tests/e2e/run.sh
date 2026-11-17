@@ -49,8 +49,42 @@ page_assert() {
 }
 
 wait_for_visuals() {
-  ab wait --fn 'document.fonts.status === "loaded" && [...document.images].filter((img) => { const r = img.getBoundingClientRect(); return r.width > 0 && r.height > 0 && r.bottom > 0 && r.top < window.innerHeight && r.right > 0 && r.left < window.innerWidth; }).every((img) => img.complete && img.naturalWidth > 0)' --timeout 30000 >/dev/null
-  ab wait 400 >/dev/null
+  # Champion icons use <img loading="lazy"> and the side cards use CSS
+  # background splashes, so wait for both before taking a screenshot.
+  ab eval --stdin >/dev/null <<'JS'
+(() => {
+  window.__visualsReady = false;
+  (async () => {
+    for (const img of document.images) {
+      if (!img.complete) {
+        img.loading = 'eager';
+        const src = img.src;
+        img.src = '';
+        img.src = src;
+      }
+    }
+    await document.fonts.ready;
+    const urls = new Set();
+    for (const el of document.querySelectorAll('*')) {
+      const bg = getComputedStyle(el).backgroundImage;
+      for (const match of bg.matchAll(/url\(["']?(.*?)["']?\)/g)) {
+        if (match[1] && !match[1].startsWith('data:')) urls.add(match[1]);
+      }
+    }
+    await Promise.all([...urls].map((url) => new Promise((resolve) => {
+      const image = new Image();
+      image.onload = resolve;
+      image.onerror = resolve;
+      image.src = url;
+    })));
+    await Promise.all([...document.images].map((img) => img.decode?.().catch(() => {})));
+    window.__visualsReady = [...document.images].every((img) => img.complete);
+  })();
+  return true;
+})()
+JS
+  ab wait --fn 'window.__visualsReady === true && document.fonts.status === "loaded"' --timeout 30000 >/dev/null
+  ab wait 300 >/dev/null
 }
 
 if grep -RIn -i 'polymarket' "$ROOT/web" >/dev/null 2>&1; then
@@ -120,7 +154,7 @@ ab open >/dev/null
 ab set viewport 1440 1000 >/dev/null
 ab network route '**/api/market/matches*' --body "$(cat "$ROOT/tests/e2e/fixtures/matches.json")" >/dev/null
 ab network route '**/api/market/match?slug=*' --body "$(cat "$ROOT/tests/e2e/fixtures/match.json")" >/dev/null
-ab network route '**/api/market/lineup?slug=*&game=4*' --body "$(cat "$ROOT/tests/e2e/fixtures/lineup-4.json")" >/dev/null
+ab network route '**/api/market/lineup?slug=*&game=3*' --body "$(cat "$ROOT/tests/e2e/fixtures/lineup-3.json")" >/dev/null
 ab network route '**/api/market/lineup?slug=*&game=1*' --body "$(cat "$ROOT/tests/e2e/fixtures/lineup-1.json")" >/dev/null
 ab navigate "$BASE_URL/" >/dev/null
 
@@ -141,11 +175,11 @@ page_assert "page markup uses only market wording" <<'JS'
   return 'wording-ok';
 })()
 JS
-page_assert "match list shows BLG vs Gen.G" <<'JS'
+page_assert "match list shows Top Esports vs Bilibili Gaming" <<'JS'
 (() => {
   const matches = [...document.querySelectorAll('[data-pm-match]')];
   if (matches.length !== 1) throw new Error(`expected 1 match, got ${matches.length}`);
-  if (!matches[0].innerText.includes('Bilibili Gaming vs Gen.G')) {
+  if (!matches[0].innerText.includes('Top Esports vs Bilibili Gaming')) {
     throw new Error(`unexpected match: ${matches[0].innerText}`);
   }
   return matches.length;
@@ -154,24 +188,24 @@ JS
 
 step "Inspect the game list"
 ab wait '[data-pm-game]' --timeout 15000 >/dev/null
-page_assert "four played games are listed" <<'JS'
+page_assert "three played games are listed" <<'JS'
 (() => {
   const games = [...document.querySelectorAll('[data-pm-game]')];
-  if (games.length !== 4) throw new Error(`expected 4 games, got ${games.length}`);
+  if (games.length !== 3) throw new Error(`expected 3 games, got ${games.length}`);
   const labels = games.map((game) => game.innerText);
-  if (!labels[3].includes('Game 4')) throw new Error(`unexpected last game: ${labels[3]}`);
+  if (!labels[2].includes('Game 3')) throw new Error(`unexpected last game: ${labels[2]}`);
   return labels.length;
 })()
 JS
 
-step "Inspect the default Game 4 lineup"
+step "Inspect the default Game 3 lineup"
 ab wait '#pm-lineup .pm-pick-name' --timeout 15000 >/dev/null
-page_assert "Game 4 lineup, source, and picks" <<'JS'
+page_assert "Game 3 lineup, source, and picks" <<'JS'
 (() => {
   const selected = document.querySelector('[data-pm-game][aria-pressed="true"]');
-  if (!selected?.innerText.includes('Game 4')) throw new Error('Game 4 was not selected');
+  if (!selected?.innerText.includes('Game 3')) throw new Error('Game 3 was not selected');
   const picks = [...document.querySelectorAll('#pm-lineup .pm-pick-name')].map((el) => el.innerText.trim());
-  const expected = ['Gwen', 'Nocturne', 'Twisted Fate', 'Yunara', 'Neeko', 'Aurora', 'Pantheon', 'Akali', 'Xayah', 'Lulu'];
+  const expected = ['Renekton', 'Pantheon', 'Syndra', 'Tristana', 'Lulu', 'Ambessa', 'Maokai', 'Yone', 'Kalista', 'Renata Glasc'];
   if (picks.length !== expected.length) throw new Error(`expected 10 picks, got ${picks.length}`);
   for (let i = 0; i < expected.length; i += 1) {
     if (picks[i] !== expected[i]) throw new Error(`pick ${i}: expected ${expected[i]}, got ${picks[i]}`);
@@ -183,45 +217,72 @@ page_assert "Game 4 lineup, source, and picks" <<'JS'
 JS
 if [[ -n "$DOCS_DIR" ]]; then
   wait_for_visuals
+  page_assert "all visible champion images are loaded" <<'JS'
+(() => {
+  const broken = [...document.images]
+    .filter((img) => {
+      const rect = img.getBoundingClientRect();
+      return rect.width > 0 && rect.height > 0 && rect.bottom > 0 && rect.top < window.innerHeight;
+    })
+    .filter((img) => !img.complete || img.naturalWidth === 0)
+    .map((img) => img.src);
+  if (broken.length) throw new Error(`unloaded images: ${broken.join(', ')}`);
+  return document.images.length;
+})()
+JS
   ab screenshot '#market-dialog' "$DOCS_DIR/02-market-lineup.png" >/dev/null
 fi
 
 step "Switch to Game 1"
 ab click '[data-pm-game="1"]' >/dev/null
 ab wait '[data-pm-game="1"][aria-pressed="true"]' --timeout 5000 >/dev/null
-ab wait --text "K'Sante" --timeout 15000 >/dev/null
-page_assert "Game 1 lineup replaces Game 4" <<'JS'
+ab wait --text 'Jayce' --timeout 15000 >/dev/null
+page_assert "Game 1 lineup replaces Game 3" <<'JS'
 (() => {
   const picks = [...document.querySelectorAll('#pm-lineup .pm-pick-name')].map((el) => el.innerText.trim());
-  if (picks[0] !== "K'Sante") throw new Error(`unexpected first pick: ${picks[0]}`);
-  if (!picks.includes('Olaf') || !picks.includes('Renata Glasc')) {
+  if (picks[0] !== 'Jayce') throw new Error(`unexpected first pick: ${picks[0]}`);
+  if (!picks.includes('Gnar') || !picks.includes('Nautilus')) {
     throw new Error(`missing expected Game 1 picks: ${picks.join(', ')}`);
   }
   return picks.length;
 })()
 JS
 
-step "Return to Game 4 and load it into the DraftGap board"
-ab click '[data-pm-game="4"]' >/dev/null
-ab wait '[data-pm-game="4"][aria-pressed="true"]' --timeout 5000 >/dev/null
-ab wait --text 'Gwen' --timeout 15000 >/dev/null
+step "Return to Game 3 and load the winning Top Esports lineup"
+ab click '[data-pm-game="3"]' >/dev/null
+ab wait '[data-pm-game="3"][aria-pressed="true"]' --timeout 5000 >/dev/null
+ab wait --text 'Renekton' --timeout 15000 >/dev/null
 ab click '[data-pm-ally="home"]' >/dev/null
 ab click '#pm-load' >/dev/null
 ab wait '#market-dialog:not([open])' --timeout 20000 >/dev/null
 ab wait '#tab-analysis:not([hidden])' --timeout 20000 >/dev/null
 ab wait --text 'DRAFT ANALYSIS' --timeout 20000 >/dev/null
-page_assert "analysis matches the Game 4 lineup" <<'JS'
+page_assert "analysis matches the winning Game 3 lineup" <<'JS'
 (() => {
   const text = document.body.innerText;
-  for (const expected of ['DRAFT ANALYSIS', 'GWEN', 'NOCTURNE', 'AURORA', 'LULU']) {
+  for (const expected of ['DRAFT ANALYSIS', 'RENEKTON', 'PANTHEON', 'SYNDRA', 'TRISTANA', 'LULU', 'AMBESSA', 'KALISTA']) {
     if (!text.includes(expected)) throw new Error(`missing analysis text: ${expected}`);
   }
-  if (!/WINRATE\s+\d+\.\d+/.test(text)) throw new Error('winrate was not rendered');
+  if (!/WINRATE\s+57\.79/.test(text)) throw new Error('expected the 57.79% winner-side winrate');
   return 'analysis-ok';
 })()
 JS
 if [[ -n "$DOCS_DIR" ]]; then
+  ab set viewport 1440 1500 >/dev/null
   wait_for_visuals
+  page_assert "all visible champion images are loaded" <<'JS'
+(() => {
+  const broken = [...document.images]
+    .filter((img) => {
+      const rect = img.getBoundingClientRect();
+      return rect.width > 0 && rect.height > 0 && rect.bottom > 0 && rect.top < window.innerHeight;
+    })
+    .filter((img) => !img.complete || img.naturalWidth === 0)
+    .map((img) => img.src);
+  if (broken.length) throw new Error(`unloaded images: ${broken.join(', ')}`);
+  return document.images.length;
+})()
+JS
   ab screenshot "$DOCS_DIR/03-analysis.png" >/dev/null
 fi
 

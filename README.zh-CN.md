@@ -125,7 +125,9 @@ python3 draftgap_model.py --serve
 2. 选择比赛后，右侧列出实际开打的 **Game 1/2/3…**。
 3. 点击某一局，显示双方英雄、选手、位置、禁用、数据来源和覆盖率。
 
-![market 比赛与 Game 4 阵容](docs/images/02-market-lineup.png)
+本示例使用 Top Esports vs Bilibili Gaming 的第 3 局：Top Esports 赢下了这一局，模型给这套获胜阵容 **57.79%** 的胜率。
+
+![market 比赛与 Game 3 阵容](docs/images/02-market-lineup.png)
 
 #### 3. 载入 DraftGap
 
@@ -135,7 +137,7 @@ python3 draftgap_model.py --serve
 - 把双方阵容写入棋盘；
 - 自动切换到 **Draft Analysis**，显示胜率、对位和协同明细。
 
-![载入后的 Draft Analysis](docs/images/03-analysis.png)
+![载入获胜的第 3 局阵容后的 Draft Analysis](docs/images/03-analysis.png)
 
 #### 4. 快速 JSON 预测
 
@@ -748,36 +750,36 @@ python3 draftgap_model.py --serve --refresh-interval 0       # 等价于关闭�
 | 路由 | 用途 |
 |---|---|
 | `GET /api/market/matches?limit=24&refresh=0` | LoL 比赛列表；`limit` 1–40，`refresh=1` 清缓存 |
-| `GET /api/market/match?slug=lol-blg-gen-2026-11-14` | 比赛详情、队伍、实际 Game 列表 |
-| `GET /api/market/lineup?slug=…&game=4` | 指定 Game 的双方阵容、禁用、来源和覆盖率 |
+| `GET /api/market/match?slug=lol-tes-blg-2026-10-28` | 比赛详情、队伍、实际 Game 列表 |
+| `GET /api/market/lineup?slug=…&game=3` | 指定 Game 的双方阵容、禁用、来源和覆盖率 |
 
-示例（BLG vs Gen.G 决赛第 4 局）：
+示例（Top Esports vs Bilibili Gaming 第 3 局）：
 
 ```bash
-curl -s 'http://127.0.0.1:8765/api/market/lineup?slug=lol-blg-gen-2026-11-14&game=4'
+curl -s 'http://127.0.0.1:8765/api/market/lineup?slug=lol-tes-blg-2026-10-28&game=3'
 ```
 
 关键字段：
 
 ```json
 {
-  "game": 4,
+  "game": 3,
   "home": {
-    "name": "Bilibili Gaming",
+    "name": "Top Esports",
     "picks": [
       {
-        "champion": "Gwen",
-        "championKey": "887",
-        "championId": "Gwen",
+        "champion": "Renekton",
+        "championKey": "58",
+        "championId": "Renekton",
         "role": 0,
-        "player": "Bin (Chen Ze-Bin)",
+        "player": "369",
         "resolved": true
       }
     ],
     "bans": [ "..." ],
     "roleSource": "leaguepedia-pick-order"
   },
-  "away": { "name": "Gen.G", "picks": [ "..." ], "bans": [ "..." ] },
+  "away": { "name": "Bilibili Gaming", "picks": [ "..." ], "bans": [ "..." ] },
   "source": {
     "kind": "leaguepedia",
     "label": "Leaguepedia archive",
